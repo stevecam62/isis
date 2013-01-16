@@ -19,15 +19,15 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.logon;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.logon.LogoutAction;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.action.LogoutAction;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Logoff extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        LogoutAction.logoutUser(request.getContext());
+    public void process(final TagProcessor tagProcessor) {
+        LogoutAction.logoutUser(tagProcessor.getContext());
     }
 
     @Override

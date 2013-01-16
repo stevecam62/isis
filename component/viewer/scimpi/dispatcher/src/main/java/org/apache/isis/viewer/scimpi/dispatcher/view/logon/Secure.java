@@ -21,19 +21,19 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.logon;
 
 import org.apache.isis.core.commons.authentication.AnonymousSession;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Secure extends AbstractElementProcessor {
     private static final String LOGIN_VIEW = "login-view";
 
     @Override
-    public void process(final Request request) {
+    public void process(final TagProcessor tagProcessor) {
         final boolean isLoggedIn = !(IsisContext.getSession().getAuthenticationSession() instanceof AnonymousSession);
         if (!isLoggedIn) {
             IsisContext.getMessageBroker().addWarning("You are not currently logged in! Please log in so you can continue.");
-            final String view = request.getOptionalProperty(LOGIN_VIEW, "/login.shtml");
-            request.getContext().redirectTo(view);
+            final String view = tagProcessor.getOptionalProperty(LOGIN_VIEW, "/login.shtml");
+            tagProcessor.getContext().redirectTo(view);
         }
     }
 

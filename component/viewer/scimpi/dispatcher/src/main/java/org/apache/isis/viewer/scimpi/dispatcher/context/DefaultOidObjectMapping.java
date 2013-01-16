@@ -50,8 +50,8 @@ import org.apache.isis.core.metamodel.spec.feature.OneToManyAssociation;
 import org.apache.isis.core.metamodel.spec.feature.OneToOneAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.core.runtime.system.persistence.PersistenceSession;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
 
 public class DefaultOidObjectMapping implements ObjectMapping {
 
@@ -99,7 +99,7 @@ public class DefaultOidObjectMapping implements ObjectMapping {
         try {
             final List<ObjectAdapter> savedObject = Lists.newArrayList();
             final JSONObject data = encodeTransientData(adapter, savedObject);
-            return RequestContext.TRANSIENT_OBJECT_OID_MARKER + data.toString(4);
+            return Request.TRANSIENT_OBJECT_OID_MARKER + data.toString(4);
         } catch (final JSONException e) {
             throw new ScimpiException(e);
         }

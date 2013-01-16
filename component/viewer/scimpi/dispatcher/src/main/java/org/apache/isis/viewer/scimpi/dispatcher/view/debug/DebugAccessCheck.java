@@ -19,15 +19,15 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.debug;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class DebugAccessCheck extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        if (request.getContext().isDebugDisabled()) {
+    public void process(final TagProcessor tagProcessor) {
+        if (tagProcessor.getContext().isDebugDisabled()) {
             throw new ForbiddenException("Debug is disabled");
         }
     }

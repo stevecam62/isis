@@ -20,8 +20,8 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.core.runtime.system.transaction.IsisTransactionManager;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Commit extends AbstractElementProcessor {
 
@@ -31,7 +31,7 @@ public class Commit extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final Request request) {
+    public void process(final TagProcessor tagProcessor) {
         // Note - the session will have changed since the earlier call if a user
         // has logged in or out in the action
         // processing above.

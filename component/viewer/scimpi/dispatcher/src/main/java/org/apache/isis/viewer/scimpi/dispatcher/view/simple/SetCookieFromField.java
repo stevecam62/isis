@@ -20,13 +20,13 @@
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
 import org.apache.isis.core.commons.exceptions.NotYetImplementedException;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class SetCookieFromField extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
+    public void process(final TagProcessor tagProcessor) {
         throw new NotYetImplementedException("3.1");
         /*
          * String objectId = request.getOptionalProperty(OBJECT); String

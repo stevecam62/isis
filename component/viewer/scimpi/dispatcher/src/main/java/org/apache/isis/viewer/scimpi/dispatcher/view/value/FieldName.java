@@ -23,10 +23,10 @@ import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class FieldName extends AbstractElementProcessor {
 
@@ -38,10 +38,10 @@ public class FieldName extends AbstractElementProcessor {
     private final Where where = Where.ANYWHERE;
 
     @Override
-    public void process(final Request request) {
-        final String id = request.getOptionalProperty(OBJECT);
-        final String fieldName = request.getRequiredProperty(FIELD);
-        final ObjectAdapter object = request.getContext().getMappedObjectOrResult(id);
+    public void process(final TagProcessor tagProcessor) {
+        final String id = tagProcessor.getOptionalProperty(OBJECT);
+        final String fieldName = tagProcessor.getRequiredProperty(FIELD);
+        final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
         final ObjectAssociation field = object.getSpecification().getAssociation(fieldName);
         if (field == null) {
             throw new ScimpiException("No field " + fieldName + " in " + object.getSpecification().getFullIdentifier());
@@ -49,7 +49,7 @@ public class FieldName extends AbstractElementProcessor {
         if (field.isVisible(IsisContext.getAuthenticationSession(), object, where).isVetoed()) {
             throw new ForbiddenException(field, ForbiddenException.VISIBLE);
         }
-        request.appendAsHtmlEncoded(field.getName());
+        tagProcessor.appendAsHtmlEncoded(field.getName());
     }
 
     @Override
@@ -57,7 +57,7 @@ public class FieldName extends AbstractElementProcessor {
         return "field-name";
     }
 
-    public static void write(final Request content, final ObjectAssociation field) {
+    public static void write(final TagProcessor content, final ObjectAssociation field) {
         content.appendHtml("<span class=\"label\" title=\"" + field.getDescription() + "\">");
         content.appendHtml("</span>");
     }

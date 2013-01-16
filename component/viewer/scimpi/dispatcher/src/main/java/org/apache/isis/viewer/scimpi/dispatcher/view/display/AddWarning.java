@@ -21,16 +21,16 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.display;
 
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.core.runtime.system.transaction.MessageBroker;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class AddWarning extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        request.pushNewBuffer();
-        request.processUtilCloseTag();
-        final String content = request.popBuffer();
+    public void process(final TagProcessor tagProcessor) {
+        tagProcessor.pushNewBuffer();
+        tagProcessor.processUtilCloseTag();
+        final String content = tagProcessor.popBuffer();
 
         final MessageBroker messageBroker = IsisContext.getMessageBroker();
         messageBroker.addWarning(content);

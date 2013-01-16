@@ -30,15 +30,15 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociationFilters;
 import org.apache.isis.core.metamodel.spec.feature.OneToManyAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.edit.RemoveAction;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.action.RemoveAction;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class RemoveElement extends AbstractElementProcessor {
 
@@ -50,28 +50,28 @@ public class RemoveElement extends AbstractElementProcessor {
     private final static Where where = Where.ANYWHERE;
 
     @Override
-    public void process(final Request request) {
-        final String title = request.getOptionalProperty(BUTTON_TITLE, "Remove From List");
-        final String cls = request.getOptionalProperty(CLASS, "action in-line delete confirm");
-        final String object = request.getOptionalProperty(OBJECT);
-        final String resultOverride = request.getOptionalProperty(RESULT_OVERRIDE);
-        final RequestContext context = request.getContext();
-        final String objectId = object != null ? object : (String) context.getVariable(RequestContext.RESULT);
+    public void process(final TagProcessor tagProcessor) {
+        final String title = tagProcessor.getOptionalProperty(BUTTON_TITLE, "Remove From List");
+        final String cls = tagProcessor.getOptionalProperty(CLASS, "action in-line delete confirm");
+        final String object = tagProcessor.getOptionalProperty(OBJECT);
+        final String resultOverride = tagProcessor.getOptionalProperty(RESULT_OVERRIDE);
+        final Request context = tagProcessor.getContext();
+        final String objectId = object != null ? object : (String) context.getVariable(Names.RESULT);
         final ObjectAdapter adapter = MethodsUtils.findObject(context, objectId);
 
-        final String element = request.getOptionalProperty(ELEMENT, (String) context.getVariable(ELEMENT));
+        final String element = tagProcessor.getOptionalProperty(ELEMENT, (String) context.getVariable(ELEMENT));
         final ObjectAdapter elementId = MethodsUtils.findObject(context, element);
 
-        final String fieldName = request.getRequiredProperty(FIELD);
+        final String fieldName = tagProcessor.getRequiredProperty(FIELD);
 
-        String view = request.getOptionalProperty(VIEW);
+        String view = tagProcessor.getOptionalProperty(VIEW);
         view = context.fullFilePath(view == null ? context.getResourceFile() : view);
-        String error = request.getOptionalProperty(ERROR);
+        String error = tagProcessor.getOptionalProperty(ERROR);
         error = context.fullFilePath(error == null ? context.getResourceFile() : error);
 
-        request.processUtilCloseTag();
+        tagProcessor.processUtilCloseTag();
 
-        write(request, adapter, fieldName, elementId, resultOverride, view, error, title, cls);
+        write(tagProcessor, adapter, fieldName, elementId, resultOverride, view, error, title, cls);
     }
 
     @Override
@@ -79,7 +79,7 @@ public class RemoveElement extends AbstractElementProcessor {
         return "remove-element";
     }
 
-    public static void write(final Request request, final ObjectAdapter adapter, final String fieldName, final ObjectAdapter element, final String resultOverride, final String view, final String error, final String title, final String cssClass) {
+    public static void write(final TagProcessor tagProcessor, final ObjectAdapter adapter, final String fieldName, final ObjectAdapter element, final String resultOverride, final String view, final String error, final String title, final String cssClass) {
         final ObjectAssociation field = adapter.getSpecification().getAssociation(fieldName);
         if (field == null) {
             throw new ScimpiException("No field " + fieldName + " in " + adapter.getSpecification().getFullIdentifier());
@@ -98,36 +98,36 @@ public class RemoveElement extends AbstractElementProcessor {
         }
 
         if (usable.isVetoed()) {
-            request.appendHtml("<div class=\"" + cssClass + " disabled-form\">"); 
-            request.appendHtml("<div class=\"button disabled\" title=\""); 
-            request.appendAsHtmlEncoded(usable.getReason());
-            request.appendHtml("\" >" + title);
-            request.appendHtml("</div>");
-            request.appendHtml("</div>");
+            tagProcessor.appendHtml("<div class=\"" + cssClass + " disabled-form\">"); 
+            tagProcessor.appendHtml("<div class=\"button disabled\" title=\""); 
+            tagProcessor.appendAsHtmlEncoded(usable.getReason());
+            tagProcessor.appendHtml("\" >" + title);
+            tagProcessor.appendHtml("</div>");
+            tagProcessor.appendHtml("</div>");
         } else {
-            if (valid(request, adapter)) {
+            if (valid(tagProcessor, adapter)) {
                 final String classSegment = " class=\"" + cssClass + "\"";
 
-                final String objectId = request.getContext().mapObject(adapter, Scope.INTERACTION);
-                final String elementId = request.getContext().mapObject(element, Scope.INTERACTION);
-                final String action = RemoveAction.ACTION + Dispatcher.COMMAND_ROOT;
-                request.appendHtml("<form" + classSegment + " method=\"post\" action=\"" + action + "\" >");
-                request.appendHtml("<input type=\"hidden\" name=\"" + OBJECT + "\" value=\"" + objectId + "\" />");
-                request.appendHtml("<input type=\"hidden\" name=\"" + FIELD + "\" value=\"" + fieldName + "\" />");
-                request.appendHtml("<input type=\"hidden\" name=\"" + ELEMENT + "\" value=\"" + elementId + "\" />");
+                final String objectId = tagProcessor.getContext().mapObject(adapter, Scope.INTERACTION);
+                final String elementId = tagProcessor.getContext().mapObject(element, Scope.INTERACTION);
+                final String action = RemoveAction.ACTION + Names.COMMAND_ROOT;
+                tagProcessor.appendHtml("<form" + classSegment + " method=\"post\" action=\"" + action + "\" >");
+                tagProcessor.appendHtml("<input type=\"hidden\" name=\"" + OBJECT + "\" value=\"" + objectId + "\" />");
+                tagProcessor.appendHtml("<input type=\"hidden\" name=\"" + FIELD + "\" value=\"" + fieldName + "\" />");
+                tagProcessor.appendHtml("<input type=\"hidden\" name=\"" + ELEMENT + "\" value=\"" + elementId + "\" />");
                 if (resultOverride != null) {
-                    request.appendHtml("<input type=\"hidden\" name=\"" + RESULT_OVERRIDE + "\" value=\"" + resultOverride + "\" />");
+                    tagProcessor.appendHtml("<input type=\"hidden\" name=\"" + RESULT_OVERRIDE + "\" value=\"" + resultOverride + "\" />");
                 }
-                request.appendHtml("<input type=\"hidden\" name=\"" + VIEW + "\" value=\"" + view + "\" />");
-                request.appendHtml("<input type=\"hidden\" name=\"" + ERROR + "\" value=\"" + error + "\" />");
-                request.appendHtml(request.getContext().interactionFields());
-                request.appendHtml("<input class=\"button\" type=\"submit\" value=\"" + title + "\" />");
-                request.appendHtml("</form>");
+                tagProcessor.appendHtml("<input type=\"hidden\" name=\"" + VIEW + "\" value=\"" + view + "\" />");
+                tagProcessor.appendHtml("<input type=\"hidden\" name=\"" + ERROR + "\" value=\"" + error + "\" />");
+                tagProcessor.appendHtml(tagProcessor.getContext().interactionFields());
+                tagProcessor.appendHtml("<input class=\"button\" type=\"submit\" value=\"" + title + "\" />");
+                tagProcessor.appendHtml("</form>");
             }
         }
     }
 
-    private static boolean valid(final Request request, final ObjectAdapter adapter) {
+    private static boolean valid(final TagProcessor tagProcessor, final ObjectAdapter adapter) {
         // TODO is this check valid/necessary?
 
         // TODO check is valid to remove element

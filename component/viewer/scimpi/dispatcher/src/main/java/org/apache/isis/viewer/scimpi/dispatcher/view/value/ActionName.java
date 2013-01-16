@@ -21,22 +21,22 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.value;
 
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 // TODO do the same for description and help, and for fields
 public class ActionName extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String objectId = request.getOptionalProperty(OBJECT);
-        final String methodName = request.getRequiredProperty(METHOD);
+    public void process(final TagProcessor tagProcessor) {
+        final String objectId = tagProcessor.getOptionalProperty(OBJECT);
+        final String methodName = tagProcessor.getRequiredProperty(METHOD);
 
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), objectId);
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), objectId);
         final ObjectAction action = MethodsUtils.findAction(object, methodName);
 
-        request.appendAsHtmlEncoded(action.getName());
+        tagProcessor.appendAsHtmlEncoded(action.getName());
     }
 
     @Override

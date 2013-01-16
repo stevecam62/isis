@@ -32,13 +32,12 @@ import org.apache.isis.core.metamodel.spec.ActionType;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
 import org.apache.isis.core.metamodel.spec.feature.ObjectActionContainer.Contributed;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.core.runtime.system.persistence.AdapterManagerSpi;
 import org.apache.isis.core.runtime.system.persistence.PersistenceSession;
 import org.apache.isis.core.runtime.system.session.IsisSession;
-import org.apache.isis.viewer.scimpi.dispatcher.DispatchException;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
 
 public class MethodsUtils {
     public static final String SERVICE_PREFIX = "service:";
@@ -48,9 +47,9 @@ public class MethodsUtils {
         return consent;
     }
 
-    public static boolean runMethod(final RequestContext context, final ObjectAction action, final ObjectAdapter target, final ObjectAdapter[] parameters, String variable, Scope scope) {
+    public static boolean runMethod(final Request context, final ObjectAction action, final ObjectAdapter target, final ObjectAdapter[] parameters, String variable, Scope scope) {
         scope = scope == null ? Scope.REQUEST : scope;
-        variable = variable == null ? RequestContext.RESULT : variable;
+        variable = variable == null ? Names.RESULT : variable;
 
         final ObjectAdapter result = action.execute(target, parameters == null ? new ObjectAdapter[0] : parameters);
         if (result == null) {
@@ -64,7 +63,7 @@ public class MethodsUtils {
         }
     }
 
-    public static boolean runMethod(final RequestContext context, final ObjectAction action, final ObjectAdapter target, final ObjectAdapter[] parameters) {
+    public static boolean runMethod(final Request context, final ObjectAction action, final ObjectAdapter target, final ObjectAdapter[] parameters) {
         return runMethod(context, action, target, parameters, null, null);
     }
 
@@ -82,7 +81,7 @@ public class MethodsUtils {
          * findAction(actions, methodName); }
          */
         if (action == null) {
-            throw new DispatchException("Failed to find action " + methodName + " on " + object);
+            throw new ScimpiException("Failed to find action " + methodName + " on " + object);
         }
         return action;
     }
@@ -104,9 +103,9 @@ public class MethodsUtils {
         return null;
     }
 
-    public static ObjectAdapter findObject(final RequestContext context, String objectId) {
+    public static ObjectAdapter findObject(final Request context, String objectId) {
         if (objectId == null) {
-            objectId = context.getStringVariable(RequestContext.RESULT);
+            objectId = context.getStringVariable(Names.RESULT);
         }
 
         if (objectId != null && objectId.startsWith(SERVICE_PREFIX)) {
@@ -119,7 +118,7 @@ public class MethodsUtils {
                     return adapter;
                 }
             }
-            throw new DispatchException("Failed to find service " + serviceId);
+            throw new ScimpiException("Failed to find service " + serviceId);
         } else {
             return context.getMappedObject(objectId);
         }

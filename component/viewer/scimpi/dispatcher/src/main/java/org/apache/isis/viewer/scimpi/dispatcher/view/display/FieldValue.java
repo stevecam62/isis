@@ -27,11 +27,11 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.progmodel.facets.value.booleans.BooleanValueFacet;
 import org.apache.isis.core.runtime.persistence.ObjectNotFoundException;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.field.LinkedObject;
 
 public class FieldValue extends AbstractElementProcessor {
@@ -44,11 +44,11 @@ public class FieldValue extends AbstractElementProcessor {
     private final Where where = Where.ANYWHERE;
 
     @Override
-    public void process(final Request request) {
-        final String className = request.getOptionalProperty(CLASS);
-        final String id = request.getOptionalProperty(OBJECT);
-        final String fieldName = request.getRequiredProperty(FIELD);
-        final ObjectAdapter object = request.getContext().getMappedObjectOrResult(id);
+    public void process(final TagProcessor tagProcessor) {
+        final String className = tagProcessor.getOptionalProperty(CLASS);
+        final String id = tagProcessor.getOptionalProperty(OBJECT);
+        final String fieldName = tagProcessor.getRequiredProperty(FIELD);
+        final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
         final ObjectAssociation field = object.getSpecification().getAssociation(fieldName);
         if (field == null) {
             throw new ScimpiException("No field " + fieldName + " in " + object.getSpecification().getFullIdentifier());
@@ -56,10 +56,10 @@ public class FieldValue extends AbstractElementProcessor {
         if (field.isVisible(IsisContext.getAuthenticationSession(), object, where).isVetoed()) {
             throw new ForbiddenException(field, ForbiddenException.VISIBLE);
         }
-        final boolean isIconShowing = request.isRequested(SHOW_ICON, showIconByDefault());
-        final int truncateTo = Integer.valueOf(request.getOptionalProperty(TRUNCATE, "0")).intValue();
+        final boolean isIconShowing = tagProcessor.isRequested(SHOW_ICON, showIconByDefault());
+        final int truncateTo = Integer.valueOf(tagProcessor.getOptionalProperty(TRUNCATE, "0")).intValue();
 
-        write(request, object, field, null, className, isIconShowing, truncateTo);
+        write(tagProcessor, object, field, null, className, isIconShowing, truncateTo);
     }
 
     @Override
@@ -67,28 +67,28 @@ public class FieldValue extends AbstractElementProcessor {
         return "field";
     }
 
-    public static void write(final Request request, final ObjectAdapter object, final ObjectAssociation field, final LinkedObject linkedField, final String className, final boolean showIcon, final int truncateTo) {
+    public static void write(final TagProcessor tagProcessor, final ObjectAdapter object, final ObjectAssociation field, final LinkedObject linkedField, final String className, final boolean showIcon, final int truncateTo) {
 
         final ObjectAdapter fieldReference = field.get(object);
 
         if (fieldReference != null) {
             final String classSection = "class=\"" + (className == null ? "value" : className) + "\"";
-            request.appendHtml("<span " + classSection + ">");
+            tagProcessor.appendHtml("<span " + classSection + ">");
             if (field.isOneToOneAssociation()) {
                 try {
                     IsisContext.getPersistenceSession().resolveImmediately(fieldReference);
                 } catch (final ObjectNotFoundException e) {
-                    request.appendHtml(e.getMessage() + "</span>");
+                    tagProcessor.appendHtml(e.getMessage() + "</span>");
                 }
             }
 
             if (!field.getSpecification().containsFacet(ParseableFacet.class) && showIcon) {
-                request.appendHtml("<img class=\"small-icon\" src=\"" + request.getContext().imagePath(fieldReference) + "\" alt=\"" + field.getSpecification().getShortIdentifier() + "\"/>");
+                tagProcessor.appendHtml("<img class=\"small-icon\" src=\"" + tagProcessor.getContext().imagePath(fieldReference) + "\" alt=\"" + field.getSpecification().getShortIdentifier() + "\"/>");
             }
 
             if (linkedField != null) {
-                final String id = request.getContext().mapObject(fieldReference, linkedField.getScope(), Scope.INTERACTION);
-                request.appendHtml("<a href=\"" + linkedField.getForwardView() + "?" + linkedField.getVariable() + "=" + id + request.getContext().encodedInteractionParameters() + "\">");
+                final String id = tagProcessor.getContext().mapObject(fieldReference, linkedField.getScope(), Scope.INTERACTION);
+                tagProcessor.appendHtml("<a href=\"" + linkedField.getForwardView() + "?" + linkedField.getVariable() + "=" + id + tagProcessor.getContext().encodedInteractionParameters() + "\">");
             }
             String value = fieldReference == null ? "" : fieldReference.titleString();
             if (truncateTo > 0 && value.length() > truncateTo) {
@@ -103,15 +103,15 @@ public class FieldValue extends AbstractElementProcessor {
                 final boolean flag = facet.isSet(fieldReference);
                 final String valueSegment = flag ? " checked=\"checked\"" : "";
                 final String disabled = " disabled=\"disabled\"";
-                request.appendHtml("<input type=\"checkbox\"" + valueSegment + disabled + " />");
+                tagProcessor.appendHtml("<input type=\"checkbox\"" + valueSegment + disabled + " />");
             } else {
-                request.appendAsHtmlEncoded(value);
+                tagProcessor.appendAsHtmlEncoded(value);
             }
 
             if (linkedField != null) {
-                request.appendHtml("</a>");
+                tagProcessor.appendHtml("</a>");
             }
-            request.appendHtml("</span>");
+            tagProcessor.appendHtml("</span>");
         }
     }
 

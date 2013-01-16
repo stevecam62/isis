@@ -23,10 +23,10 @@ import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class FieldLabel extends AbstractElementProcessor {
 
@@ -38,10 +38,10 @@ public class FieldLabel extends AbstractElementProcessor {
     private final Where where = Where.ANYWHERE;
 
     @Override
-    public void process(final Request request) {
-        final String id = request.getOptionalProperty(OBJECT);
-        final String fieldName = request.getRequiredProperty(FIELD);
-        final ObjectAdapter object = request.getContext().getMappedObjectOrResult(id);
+    public void process(final TagProcessor tagProcessor) {
+        final String id = tagProcessor.getOptionalProperty(OBJECT);
+        final String fieldName = tagProcessor.getRequiredProperty(FIELD);
+        final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
         final ObjectAssociation field = object.getSpecification().getAssociation(fieldName);
         if (field == null) {
             throw new ScimpiException("No field " + fieldName + " in " + object.getSpecification().getFullIdentifier());
@@ -49,13 +49,13 @@ public class FieldLabel extends AbstractElementProcessor {
         if (field.isVisible(IsisContext.getAuthenticationSession(), object, where).isVetoed()) {
             throw new ForbiddenException(field, ForbiddenException.VISIBLE);
         }
-        String delimiter = request.getOptionalProperty("delimiter");
+        String delimiter = tagProcessor.getOptionalProperty("delimiter");
         if (delimiter == null) {
             delimiter = ": ";
         } else if (delimiter.equals("")) {
             delimiter = null;
         }
-        write(request, field, delimiter);
+        write(tagProcessor, field, delimiter);
     }
 
     @Override
@@ -63,7 +63,7 @@ public class FieldLabel extends AbstractElementProcessor {
         return "label";
     }
 
-    public static void write(final Request content, final ObjectAssociation field, final String delimiter) {
+    public static void write(final TagProcessor content, final ObjectAssociation field, final String delimiter) {
         final String description = field.getDescription();
         final String titleSegment = description == null || description.equals("") ? null : ("title=\"" + description + "\"");
         content.appendHtml("<span class=\"label\"" + titleSegment + ">");

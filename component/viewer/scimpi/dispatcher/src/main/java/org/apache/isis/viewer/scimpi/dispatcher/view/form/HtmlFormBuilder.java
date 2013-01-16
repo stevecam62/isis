@@ -20,13 +20,13 @@
 package org.apache.isis.viewer.scimpi.dispatcher.view.form;
 
 import org.apache.isis.core.commons.exceptions.UnknownTypeException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.view.HelpLink;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.other.HelpLink;
 
 public class HtmlFormBuilder {
 
     public static void createForm(
-            final Request request,
+            final TagProcessor tagProcessor,
             final String action,
             final HiddenInputField[] hiddenFields,
             final InputField[] fields,
@@ -41,12 +41,12 @@ public class HtmlFormBuilder {
             final String cancelTo) {
 
         String classSegment = " class=\"" + className + (id == null ? "\"" : "\" id=\"" + id + "\"");
-        request.appendHtml("<form " + classSegment + " action=\"" + action + "\" method=\"post\" accept-charset=\"UTF-8\">\n");
+        tagProcessor.appendHtml("<form " + classSegment + " action=\"" + action + "\" method=\"post\" accept-charset=\"UTF-8\">\n");
         if (formTitle != null && formTitle.trim().length() > 0) {
             classSegment = " class=\"title\"";
-            request.appendHtml("<div" + classSegment + ">");
-            request.appendAsHtmlEncoded(formTitle);
-            request.appendHtml("</div>\n");
+            tagProcessor.appendHtml("<div" + classSegment + ">");
+            tagProcessor.appendAsHtmlEncoded(formTitle);
+            tagProcessor.appendHtml("</div>\n");
         }
 
         // TODO reinstate fieldsets when we can specify them
@@ -54,51 +54,51 @@ public class HtmlFormBuilder {
 
         final String cls = "errors";
         if (errors != null) {
-            request.appendHtml("<div class=\"" + cls + "\">");
-            request.appendAsHtmlEncoded(errors);
-            request.appendHtml("</div>");
+            tagProcessor.appendHtml("<div class=\"" + cls + "\">");
+            tagProcessor.appendAsHtmlEncoded(errors);
+            tagProcessor.appendHtml("</div>");
         }
         for (final HiddenInputField hiddenField : hiddenFields) {
             if (hiddenField == null) {
                 continue;
             }
-            request.appendHtml("  <input type=\"hidden\" name=\"" + hiddenField.getName() + "\" value=\"");
-            request.appendAsHtmlEncoded(hiddenField.getValue());
-            request.appendHtml("\" />\n");
+            tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + hiddenField.getName() + "\" value=\"");
+            tagProcessor.appendAsHtmlEncoded(hiddenField.getValue());
+            tagProcessor.appendHtml("\" />\n");
         }
-        request.appendHtml(request.getContext().interactionFields());
+        tagProcessor.appendHtml(tagProcessor.getContext().interactionFields());
         for (final InputField fld : fields) {
             if (fld.isHidden()) {
-                request.appendHtml("  <input type=\"hidden\" name=\"" + fld.getName() + "\" value=\"");
-                request.appendAsHtmlEncoded(fld.getValue());
-                request.appendHtml("\" />\n");
+                tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + fld.getName() + "\" value=\"");
+                tagProcessor.appendAsHtmlEncoded(fld.getValue());
+                tagProcessor.appendHtml("\" />\n");
             } else {
                 final String errorSegment = fld.getErrorText() == null ? "" : "<span class=\"error\">" + fld.getErrorText() + "</span>";
                 final String fieldSegment = createField(fld);
                 final String helpSegment = HelpLink.createHelpSegment(fld.getDescription(), fld.getHelpReference());
                 final String title = fld.getDescription().equals("") ? "" : " title=\"" + fld.getDescription() + "\"";
-                request.appendHtml("  <div class=\"field " + fld.getName() + "\"><label class=\"label\" " + title + ">");
-                request.appendAsHtmlEncoded(fld.getLabel());
-                request.appendHtml(labelDelimiter + "</label>" + fieldSegment + errorSegment + helpSegment + "</div>\n");
+                tagProcessor.appendHtml("  <div class=\"field " + fld.getName() + "\"><label class=\"label\" " + title + ">");
+                tagProcessor.appendAsHtmlEncoded(fld.getLabel());
+                tagProcessor.appendHtml(labelDelimiter + "</label>" + fieldSegment + errorSegment + helpSegment + "</div>\n");
             }
         }
 
-        request.appendHtml("  <input class=\"button\" type=\"submit\" value=\"");
-        request.appendAsHtmlEncoded(buttonTitle);
-        request.appendHtml("\" name=\"execute\" />\n");
-        HelpLink.append(request, description, helpReference);
+        tagProcessor.appendHtml("  <input class=\"button\" type=\"submit\" value=\"");
+        tagProcessor.appendAsHtmlEncoded(buttonTitle);
+        tagProcessor.appendHtml("\" name=\"execute\" />\n");
+        HelpLink.append(tagProcessor, description, helpReference);
         // TODO alllow forms to be cancelled, returning to previous page.
         // request.appendHtml("  <div class=\"action\"><a class=\"button\" href=\"reset\">Cancel</a></div>");
 
         if (cancelTo != null) {
-            request.appendHtml("  <input class=\"button\" type=\"button\" value=\"");
-            request.appendAsHtmlEncoded("Cancel");
-            request.appendHtml("\" onclick=\"window.location = '" + cancelTo + "'\" name=\"cancel\" />\n");
+            tagProcessor.appendHtml("  <input class=\"button\" type=\"button\" value=\"");
+            tagProcessor.appendAsHtmlEncoded("Cancel");
+            tagProcessor.appendHtml("\" onclick=\"window.location = '" + cancelTo + "'\" name=\"cancel\" />\n");
         }
 
         // TODO reinstate fieldsets when we can specify them
         // request.appendHtml("</fieldset>\n");
-        request.appendHtml("</form>\n");
+        tagProcessor.appendHtml("</form>\n");
     }
 
     private static String createField(final InputField field) {
@@ -143,7 +143,7 @@ public class HtmlFormBuilder {
         final String disabled = field.isEditable() ? "" : " disabled=\"disabled\"";
         final String maxLength = field.getMaxLength() == 0 ? "" : " maxlength=\"" + field.getMaxLength() + "\"";
         return "<textarea" + requiredSegment + " name=\"" + field.getName() + "\"" + columnsSegment + rowsSegment + wrapSegment
-                + maxLength + disabled + ">" + Request.getEncoder().encoder(field.getValue()) + "</textarea>";
+                + maxLength + disabled + ">" + TagProcessor.getEncoder().encoder(field.getValue()) + "</textarea>";
     }
 
     private static String createPasswordField(final InputField field) {
@@ -157,7 +157,7 @@ public class HtmlFormBuilder {
 
     private static String createTextField(final InputField field, final String type, final String additionalAttributes) {
         final String value = field.getValue();
-        final String valueSegment = value == null ? "" : " value=\"" + Request.getEncoder().encoder(value) + "\"";
+        final String valueSegment = value == null ? "" : " value=\"" + TagProcessor.getEncoder().encoder(value) + "\"";
         final String lengthSegment = field.getWidth() == 0 ? "" : " size=\"" + field.getWidth() + "\"";
         final String maxLengthSegment = field.getMaxLength() == 0 ? "" : " maxlength=\"" + field.getMaxLength() + "\"";
         final String requiredSegment = !field.isRequired() ? "" : " required";
@@ -187,7 +187,7 @@ public class HtmlFormBuilder {
             if (field.getType() == InputField.TEXT && options[i].equals("__other")) {
                 offerOther = true;
             } else {
-                str.append("    <option value=\"" + Request.getEncoder().encoder(ids[i]) + "\"" + selectedSegment + ">" + Request.getEncoder().encoder(options[i]) + "</option>\n");
+                str.append("    <option value=\"" + TagProcessor.getEncoder().encoder(ids[i]) + "\"" + selectedSegment + ">" + TagProcessor.getEncoder().encoder(options[i]) + "</option>\n");
             }
         }
         if (!field.isRequired() || length == 0) {

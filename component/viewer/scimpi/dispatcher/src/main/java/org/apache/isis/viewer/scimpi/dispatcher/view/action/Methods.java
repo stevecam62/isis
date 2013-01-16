@@ -28,11 +28,11 @@ import org.apache.isis.core.metamodel.spec.ObjectActionSet;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
 import org.apache.isis.core.metamodel.spec.feature.ObjectActionContainer.Contributed;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.field.InclusionList;
 
 public class Methods extends AbstractElementProcessor {
@@ -45,33 +45,33 @@ public class Methods extends AbstractElementProcessor {
     private final static Where where = Where.ANYWHERE;
 
     @Override
-    public void process(final Request request) {
-        String objectId = request.getOptionalProperty(OBJECT);
-        final String view = request.getOptionalProperty(VIEW, "_generic_action." + Dispatcher.EXTENSION);
-        final String cancelTo = request.getOptionalProperty(CANCEL_TO);
-        final boolean showForms = request.isRequested(FORMS, false);
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), objectId);
+    public void process(final TagProcessor tagProcessor) {
+        String objectId = tagProcessor.getOptionalProperty(OBJECT);
+        final String view = tagProcessor.getOptionalProperty(VIEW, "_generic_action." + Names.EXTENSION);
+        // final String cancelTo = tagProcessor.getOptionalProperty(CANCEL_TO);
+        final boolean showForms = tagProcessor.isRequested(FORMS, false);
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), objectId);
         if (objectId == null) {
-            objectId = request.getContext().mapObject(object, null);
+            objectId = tagProcessor.getContext().mapObject(object, null);
         }
 
         final InclusionList inclusionList = new InclusionList();
-        request.setBlockContent(inclusionList);
-        request.processUtilCloseTag();
+        tagProcessor.setBlockContent(inclusionList);
+        tagProcessor.processUtilCloseTag();
 
-        request.appendHtml("<div class=\"actions\">");
+        tagProcessor.appendHtml("<div class=\"actions\">");
         if (inclusionList.includes("edit") && !object.getSpecification().isService()) {
-            request.appendHtml("<div class=\"action\">");
-            request.appendHtml("<a class=\"button\" href=\"_generic_edit." + Dispatcher.EXTENSION + "?_result=" + objectId + "\">Edit...</a>");
-            request.appendHtml("</div>");
+            tagProcessor.appendHtml("<div class=\"action\">");
+            tagProcessor.appendHtml("<a class=\"button\" href=\"_generic_edit." + Names.EXTENSION + "?_result=" + objectId + "\">Edit...</a>");
+            tagProcessor.appendHtml("</div>");
         }
-        writeMethods(request, objectId, object, showForms, inclusionList, view, "_generic.shtml?_result=" + objectId);
-        request.popBlockContent();
-        request.appendHtml("</div>");
+        writeMethods(tagProcessor, objectId, object, showForms, inclusionList, view, "_generic.shtml?_result=" + objectId);
+        tagProcessor.popBlockContent();
+        tagProcessor.appendHtml("</div>");
     }
 
     public static void writeMethods(
-            final Request request,
+            final TagProcessor tagProcessor,
             final String objectId,
             final ObjectAdapter adapter,
             final boolean showForms,
@@ -79,21 +79,21 @@ public class Methods extends AbstractElementProcessor {
             final String view,
             final String cancelTo) {
         List<ObjectAction> actions = adapter.getSpecification().getObjectActions(ActionType.USER, Contributed.INCLUDED);
-        writeMethods(request, adapter, actions, objectId, showForms, inclusionList, view, cancelTo);
+        writeMethods(tagProcessor, adapter, actions, objectId, showForms, inclusionList, view, cancelTo);
         // TODO determine if system is set up to display exploration methods
         if (true) {
             actions = adapter.getSpecification().getObjectActions(ActionType.EXPLORATION, Contributed.INCLUDED);
-            writeMethods(request, adapter, actions, objectId, showForms, inclusionList, view, cancelTo);
+            writeMethods(tagProcessor, adapter, actions, objectId, showForms, inclusionList, view, cancelTo);
         }
         // TODO determine if system is set up to display debug methods
         if (true) {
             actions = adapter.getSpecification().getObjectActions(ActionType.DEBUG, Contributed.INCLUDED);
-            writeMethods(request, adapter, actions, objectId, showForms, inclusionList, view, cancelTo);
+            writeMethods(tagProcessor, adapter, actions, objectId, showForms, inclusionList, view, cancelTo);
         }
     }
 
     private static void writeMethods(
-            final Request request,
+            final TagProcessor tagProcessor,
             final ObjectAdapter adapter,
             List<ObjectAction> actions,
             final String objectId,
@@ -105,32 +105,32 @@ public class Methods extends AbstractElementProcessor {
         for (int j = 0; j < actions.size(); j++) {
             final ObjectAction action = actions.get(j);
             if (action instanceof ObjectActionSet) {
-                request.appendHtml("<div class=\"actions\">");
-                writeMethods(request, adapter, action.getActions(), objectId, showForms, inclusionList, view, cancelTo);
-                request.appendHtml("</div>");
+                tagProcessor.appendHtml("<div class=\"actions\">");
+                writeMethods(tagProcessor, adapter, action.getActions(), objectId, showForms, inclusionList, view, cancelTo);
+                tagProcessor.appendHtml("</div>");
             } else if (action.isContributed()) {
                 if (action.getParameterCount() == 1 && adapter.getSpecification().isOfType(action.getParameters().get(0).getSpecification())) {
                     if (objectId != null) {
-                        final ObjectAdapter target = request.getContext().getMappedObject(objectId);
+                        final ObjectAdapter target = tagProcessor.getContext().getMappedObject(objectId);
                         final ObjectAdapter realTarget = action.realTarget(target);
-                        final String realTargetId = request.getContext().mapObject(realTarget, Scope.INTERACTION);
-                        writeMethod(request, adapter, new String[] { objectId }, action, realTargetId, showForms, view, cancelTo);
+                        final String realTargetId = tagProcessor.getContext().mapObject(realTarget, Scope.INTERACTION);
+                        writeMethod(tagProcessor, adapter, new String[] { objectId }, action, realTargetId, showForms, view, cancelTo);
                     } else {
-                        request.appendHtml("<div class=\"action\">");
-                        request.appendAsHtmlEncoded(action.getName());
-                        request.appendHtml("???</div>");
+                        tagProcessor.appendHtml("<div class=\"action\">");
+                        tagProcessor.appendAsHtmlEncoded(action.getName());
+                        tagProcessor.appendHtml("???</div>");
                     }
                 } else if (!adapter.getSpecification().isService()) {
-                    writeMethod(request, adapter, new String[0], action, objectId, showForms, view, cancelTo);
+                    writeMethod(tagProcessor, adapter, new String[0], action, objectId, showForms, view, cancelTo);
                 }
             } else {
-                writeMethod(request, adapter, new String[0], action, objectId, showForms, view, cancelTo);
+                writeMethod(tagProcessor, adapter, new String[0], action, objectId, showForms, view, cancelTo);
             }
         }
     }
 
     private static void writeMethod(
-            final Request request,
+            final TagProcessor tagProcessor,
             final ObjectAdapter adapter,
             final String[] parameters,
             final ObjectAction action,
@@ -142,11 +142,11 @@ public class Methods extends AbstractElementProcessor {
         // action.isVisible(IsisContext.getSession(), adapter))
         // {
         if (action.isVisible(IsisContext.getAuthenticationSession(), adapter, where).isAllowed()) {
-            request.appendHtml("<div class=\"action\">");
+            tagProcessor.appendHtml("<div class=\"action\">");
             if (IsisContext.getSession() == null) {
-                request.appendHtml("<span class=\"disabled\" title=\"no user logged in\">");
-                request.appendAsHtmlEncoded(action.getName());
-                request.appendHtml("</span>");
+                tagProcessor.appendHtml("<span class=\"disabled\" title=\"no user logged in\">");
+                tagProcessor.appendAsHtmlEncoded(action.getName());
+                tagProcessor.appendHtml("</span>");
                 /*
                  * } else if (action.isUsable(IsisContext.getSession(),
                  * null).isVetoed()) {
@@ -155,33 +155,33 @@ public class Methods extends AbstractElementProcessor {
                  * "\">"); request.appendHtml(action.getName());
                  * request.appendHtml("</span>");
                  */} else if (action.isUsable(IsisContext.getAuthenticationSession(), adapter, where).isVetoed()) {
-                request.appendHtml("<span class=\"disabled\" title=\"" + action.isUsable(IsisContext.getAuthenticationSession(), adapter, where).getReason() + "\">");
-                request.appendAsHtmlEncoded(action.getName());
-                request.appendHtml("</span>");
+                tagProcessor.appendHtml("<span class=\"disabled\" title=\"" + action.isUsable(IsisContext.getAuthenticationSession(), adapter, where).getReason() + "\">");
+                tagProcessor.appendAsHtmlEncoded(action.getName());
+                tagProcessor.appendHtml("</span>");
             } else {
-                final String version = request.getContext().mapVersion(adapter);
+                final String version = tagProcessor.getContext().mapVersion(adapter);
                 if (action.getParameterCount() == 0 || (action.isContributed() && action.getParameterCount() == 1)) {
-                    ActionButton.write(request, adapter, action, parameters, objectId, version, "_generic." + Dispatcher.EXTENSION, null, null, null, null, null, null, null, null, null);
+                    ActionButton.write(tagProcessor, adapter, action, parameters, objectId, version, "_generic." + Names.EXTENSION, null, null, null, null, null, null, null, null, null);
                 } else if (showForms) {
                     final CreateFormParameter params = new CreateFormParameter();
                     params.objectId = objectId;
                     params.methodName = action.getId();
-                    params.forwardResultTo = "_generic." + Dispatcher.EXTENSION;
+                    params.forwardResultTo = "_generic." + Names.EXTENSION;
                     params.buttonTitle = "OK";
                     params.formTitle = action.getName();
-                    ActionForm.createForm(request, params, true);
+                    ActionForm.createForm(tagProcessor, params, true);
                 } else {
-                    request.appendHtml("<a class=\"button\" href=\"" + view + "?_result=" + objectId + "&amp;_" + VERSION + "=" + version + "&amp;_" + METHOD + "=" + action.getId());
+                    tagProcessor.appendHtml("<a class=\"button\" href=\"" + view + "?_result=" + objectId + "&amp;_" + VERSION + "=" + version + "&amp;_" + METHOD + "=" + action.getId());
                     if (cancelTo != null) {
-                        request.appendHtml("&amp;_cancel-to=");
-                        request.appendAsHtmlEncoded("cancel-to=\"" + cancelTo + "\"");
+                        tagProcessor.appendHtml("&amp;_cancel-to=");
+                        tagProcessor.appendAsHtmlEncoded("cancel-to=\"" + cancelTo + "\"");
                     }
-                    request.appendHtml("\" title=\"" + action.getDescription() + "\">");
-                    request.appendAsHtmlEncoded(action.getName() + "...");
-                    request.appendHtml("</a>");
+                    tagProcessor.appendHtml("\" title=\"" + action.getDescription() + "\">");
+                    tagProcessor.appendAsHtmlEncoded(action.getName() + "...");
+                    tagProcessor.appendHtml("</a>");
                 }
             }
-            request.appendHtml("</div>");
+            tagProcessor.appendHtml("</div>");
         }
     }
 

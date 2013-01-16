@@ -19,29 +19,29 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.action.RequiredPropertyException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.RequiredPropertyException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class SetCookie extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String name = request.getRequiredProperty("name");
-        final String value = request.getOptionalProperty("value");
-        final boolean isClear = request.getOptionalProperty("action", "set").equals("clear");
-        final String expiresString = request.getOptionalProperty("expires", "-1");
+    public void process(final TagProcessor tagProcessor) {
+        final String name = tagProcessor.getRequiredProperty("name");
+        final String value = tagProcessor.getOptionalProperty("value");
+        final boolean isClear = tagProcessor.getOptionalProperty("action", "set").equals("clear");
+        final String expiresString = tagProcessor.getOptionalProperty("expires", "-1");
 
         if (!isClear && value == null) {
             throw new RequiredPropertyException("Property not set: " + value);
         }
         if (isClear) {
-            request.appendDebug("cookie: " + name + " (cleared)");
-            request.getContext().addCookie(name, null, 0);
+            tagProcessor.appendDebug("cookie: " + name + " (cleared)");
+            tagProcessor.getContext().addCookie(name, null, 0);
         } else {
             if (value.length() > 0) {
-                request.appendDebug("cookie: " + name + " set to"+ value);
-                request.getContext().addCookie(name, value, Integer.valueOf(expiresString));
+                tagProcessor.appendDebug("cookie: " + name + " set to"+ value);
+                tagProcessor.getContext().addCookie(name, value, Integer.valueOf(expiresString));
             }
         }
     }

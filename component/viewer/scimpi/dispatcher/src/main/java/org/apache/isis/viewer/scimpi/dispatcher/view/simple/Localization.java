@@ -23,8 +23,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 /**
  * Displays the localization data for the current user.
@@ -32,8 +32,8 @@ import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
 public class Localization extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        request.closeEmpty();
+    public void process(final TagProcessor tagProcessor) {
+        tagProcessor.closeEmpty();
 
         org.apache.isis.applib.profiles.Localization localization = IsisContext.getLocalization();
         if (localization != null) {
@@ -42,9 +42,9 @@ public class Localization extends AbstractElementProcessor {
          //   country = locale.toString();
             String timeZone = localization.getTimeZone().getDisplayName();
             
-            request.appendAsHtmlEncoded(country + ", " + timeZone);
+            tagProcessor.appendAsHtmlEncoded(country + ", " + timeZone);
         } else {
-            request.appendAsHtmlEncoded("No localization data!");
+            tagProcessor.appendAsHtmlEncoded("No localization data!");
         }
         
         Locale locale = Locale.getDefault();
@@ -52,7 +52,7 @@ public class Localization extends AbstractElementProcessor {
       //  country = locale.toString();
         String timeZone = TimeZone.getDefault().getDisplayName();
         
-        request.appendAsHtmlEncoded("\n (Default " + country + ", " + timeZone +")");
+        tagProcessor.appendAsHtmlEncoded("\n (Default " + country + ", " + timeZone +")");
 
     }
 

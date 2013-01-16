@@ -19,6 +19,8 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher;
 
+import org.apache.isis.viewer.scimpi.ScimpiException;
+
 public class ScimpiNotFoundException extends ScimpiException {
     public ScimpiNotFoundException() {
         super();

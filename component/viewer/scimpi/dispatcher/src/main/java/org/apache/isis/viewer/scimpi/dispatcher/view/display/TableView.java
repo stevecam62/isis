@@ -25,11 +25,11 @@ import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.facets.object.parseable.ParseableFacet;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.persistence.ObjectNotFoundException;
-import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.PageWriter;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.field.LinkedFieldsBlock;
 import org.apache.isis.viewer.scimpi.dispatcher.view.field.LinkedObject;
 import org.apache.isis.viewer.scimpi.dispatcher.view.simple.RemoveElement;
@@ -137,120 +137,120 @@ public class TableView extends AbstractTableView {
         }
         
         @Override
-        public void writeElement(final Request request, final RequestContext context, final ObjectAdapter element) {
+        public void writeElement(final TagProcessor tagProcessor, final Request context, final ObjectAdapter element) {
             final String rowId = context.mapObject(element, Scope.INTERACTION);
             final String scope = linkRow == null ? "" : "&amp;" + SCOPE + "=" + linkRow.getScope();
             String result = "";
             result = context.encodedInteractionParameters();
 
             if (noColumns == 0) {
-                request.appendHtml("<td>");
+                tagProcessor.appendHtml("<td>");
                 if (linkRow != null) {
-                    request.appendHtml("<td><a href=\"" + linkRow.getForwardView() + "?" + linkRow.getVariable() + "=" + rowId + result + scope + "\">");
-                    request.appendAsHtmlEncoded(element.titleString());
-                    request.appendHtml("</a>");
+                    tagProcessor.appendHtml("<td><a href=\"" + linkRow.getForwardView() + "?" + linkRow.getVariable() + "=" + rowId + result + scope + "\">");
+                    tagProcessor.appendAsHtmlEncoded(element.titleString());
+                    tagProcessor.appendHtml("</a>");
                 } else {
-                    request.appendAsHtmlEncoded(element.titleString());
+                    tagProcessor.appendAsHtmlEncoded(element.titleString());
                 }
-                request.appendHtml("</td>");
+                tagProcessor.appendHtml("</td>");
 
             } else {
                 if (showTitle) {
-                    request.appendHtml("<td>");
-                    request.appendAsHtmlEncoded(element.titleString());
-                    request.appendHtml("</td>");
+                    tagProcessor.appendHtml("<td>");
+                    tagProcessor.appendAsHtmlEncoded(element.titleString());
+                    tagProcessor.appendHtml("</td>");
                 }
 
                 for (int i = 0; i < noColumns; i++) {
                     if (fields.get(i).isOneToManyAssociation()) {
                         continue;
                     }
-                    request.appendHtml("<td>");
+                    tagProcessor.appendHtml("<td>");
                     final ObjectAdapter field = fields.get(i).get(element);
                     if (field != null) {
                         if (showIcons && !fields.get(i).getSpecification().containsFacet(ParseableFacet.class)) {
-                            request.appendHtml("<img class=\"" + "small-icon" + "\" src=\"" + request.getContext().imagePath(field) + "\" alt=\"" + fields.get(i).getSpecification().getShortIdentifier() + "\"/>");
+                            tagProcessor.appendHtml("<img class=\"" + "small-icon" + "\" src=\"" + tagProcessor.getContext().imagePath(field) + "\" alt=\"" + fields.get(i).getSpecification().getShortIdentifier() + "\"/>");
                         }
                         if (linkRow != null) {
-                            request.appendHtml("<a href=\"" + linkRow.getForwardView() + "?" + linkRow.getVariable() + "=" + rowId + result + scope + "\">");
+                            tagProcessor.appendHtml("<a href=\"" + linkRow.getForwardView() + "?" + linkRow.getVariable() + "=" + rowId + result + scope + "\">");
                         } else if (linkedFields[i] != null) {
                             final ObjectAdapter fieldObject = fields.get(i).get(element);
                             final String id = context.mapObject(fieldObject, Scope.INTERACTION);
-                            request.appendHtml("<a href=\"" + linkedFields[i].getForwardView() + "?" + linkedFields[i].getVariable() + "=" + id + "\">");
-                            context.mapObject(fieldObject, RequestContext.scope(linkedFields[i].getScope()));
+                            tagProcessor.appendHtml("<a href=\"" + linkedFields[i].getForwardView() + "?" + linkedFields[i].getVariable() + "=" + id + "\">");
+                            context.mapObject(fieldObject, Request.scope(linkedFields[i].getScope()));
 
                         }
                         try {
-                            request.appendAsHtmlEncoded(field.titleString());
+                            tagProcessor.appendAsHtmlEncoded(field.titleString());
                         } catch (final ObjectNotFoundException e) {
-                            request.appendAsHtmlEncoded(e.getMessage());
+                            tagProcessor.appendAsHtmlEncoded(e.getMessage());
                         }
                         if (linkRow != null || linkedFields[i] != null) {
-                            request.appendHtml("</a>");
+                            tagProcessor.appendHtml("</a>");
                         }
                     }
-                    request.appendHtml("</td>");
+                    tagProcessor.appendHtml("</td>");
 
                 }
             }
-            request.appendHtml("<td class=\"controls\">");
+            tagProcessor.appendHtml("<td class=\"controls\">");
             if (showSelectOption) {
-                request.appendHtml("<a class=\"button element-select\" href=\"" + "_generic." + Dispatcher.EXTENSION + "?" + RequestContext.RESULT + "=" + rowId + result + scope + "\">view</a>");
+                tagProcessor.appendHtml("<a class=\"button element-select\" href=\"" + "_generic." + Names.EXTENSION + "?" + Names.RESULT + "=" + rowId + result + scope + "\">view</a>");
             }
             if (showEditOption) {
-                request.appendHtml(" <a class=\"button element-edit\" href=\"" + "_generic_edit." + Dispatcher.EXTENSION + "?" + RequestContext.RESULT + "=" + rowId + result + scope + "\">edit</a>");
+                tagProcessor.appendHtml(" <a class=\"button element-edit\" href=\"" + "_generic_edit." + Names.EXTENSION + "?" + Names.RESULT + "=" + rowId + result + scope + "\">edit</a>");
             }
 
             if (showDeleteOption && parent != null) {
-                String view = request.getViewPath();
+                String view = tagProcessor.getViewPath();
                 view = context.fullFilePath(view == null ? context.getResourceFile() : view);
-                RemoveElement.write(request, context.getMappedObject(parent), fieldName, element, null, view, view, "delete", "action in-line element-delete confirm");
+                RemoveElement.write(tagProcessor, context.getMappedObject(parent), fieldName, element, null, view, view, "delete", "action in-line element-delete confirm");
             }
 
-            request.appendHtml("</td>");
+            tagProcessor.appendHtml("</td>");
 
         }
     }
 
     @Override
     protected TableContentWriter createRowBuilder(
-            final Request request,
-            final RequestContext context,
+            final TagProcessor tagProcessor,
+            final Request context,
             final String parent,
             final List<ObjectAssociation> allFields,
             final ObjectAdapter collection) {
-        final String fieldName = request.getOptionalProperty(FIELD);
-        final String title = request.getOptionalProperty(FORM_TITLE);
-        return rowBuilder(request, context, title, parent, fieldName, allFields, showIconByDefault());
+        final String fieldName = tagProcessor.getOptionalProperty(FIELD);
+        final String title = tagProcessor.getOptionalProperty(FORM_TITLE);
+        return rowBuilder(tagProcessor, context, title, parent, fieldName, allFields, showIconByDefault());
     }
 
     private static TableContentWriter rowBuilder(
-            final Request request,
-            final RequestContext context,
+            final TagProcessor tagProcessor,
+            final Request context,
             final String title,
             final String object,
             final String fieldName,
             final List<ObjectAssociation> allFields,
             final boolean showIconByDefault) {
-        final String linkRowView = request.getOptionalProperty(LINK_VIEW);
-        final String linkObjectName = request.getOptionalProperty(ELEMENT_NAME, RequestContext.RESULT);
-        final String linkObjectScope = request.getOptionalProperty(SCOPE, Scope.INTERACTION.toString());
+        final String linkRowView = tagProcessor.getOptionalProperty(LINK_VIEW);
+        final String linkObjectName = tagProcessor.getOptionalProperty(ELEMENT_NAME, Names.RESULT);
+        final String linkObjectScope = tagProcessor.getOptionalProperty(SCOPE, Scope.INTERACTION.toString());
         final LinkedObject linkRow = linkRowView == null ? null : new LinkedObject(linkObjectName, linkObjectScope, context.fullUriPath(linkRowView));
-        final boolean includeHeader = request.isRequested(HEADER, true);
-        final boolean includeFooter = request.isRequested(FOOTER, false);
+        final boolean includeHeader = tagProcessor.isRequested(HEADER, true);
+        final boolean includeFooter = tagProcessor.isRequested(FOOTER, false);
 
-        final boolean linkFields = request.isRequested("link-fields", true);
-        final boolean showTitle = request.isRequested(SHOW_TITLE, false);
-        final boolean showIcons = request.isRequested(SHOW_ICON, showIconByDefault);
-        final boolean showSelectOption = request.isRequested(SHOW_SELECT, true);
-        final boolean showEditOption = request.isRequested(SHOW_EDIT, true);
-        final boolean showDeleteOption = request.isRequested(SHOW_DELETE, true);
+        final boolean linkFields = tagProcessor.isRequested("link-fields", true);
+        final boolean showTitle = tagProcessor.isRequested(SHOW_TITLE, false);
+        final boolean showIcons = tagProcessor.isRequested(SHOW_ICON, showIconByDefault);
+        final boolean showSelectOption = tagProcessor.isRequested(SHOW_SELECT, true);
+        final boolean showEditOption = tagProcessor.isRequested(SHOW_EDIT, true);
+        final boolean showDeleteOption = tagProcessor.isRequested(SHOW_DELETE, true);
 
-        final String noColumnsString = request.getOptionalProperty("no-columns", "3");
+        final String noColumnsString = tagProcessor.getOptionalProperty("no-columns", "3");
 
         final LinkedFieldsBlock block = new LinkedFieldsBlock();
-        request.setBlockContent(block);
-        request.processUtilCloseTag();
+        tagProcessor.setBlockContent(block);
+        tagProcessor.processUtilCloseTag();
         final List<ObjectAssociation> fields = block.includedFields(allFields);
         final LinkedObject[] linkedFields = block.linkedFields(fields);
         for (int i = 0; i < linkedFields.length; i++) {
@@ -278,14 +278,14 @@ public class TableView extends AbstractTableView {
             headers[h++] = fields.get(i).getName();
         }
 
-        request.popBlockContent();
+        tagProcessor.popBlockContent();
 
         return new SimpleTableBuilder(object, includeHeader, includeFooter, title, noColumns, headers, fields, showTitle,
                 showIcons, showSelectOption, showDeleteOption, showEditOption, fieldName, linkedFields, linkRow);
     }
 
     public static void write(
-            final Request request,
+            final TagProcessor tagProcessor,
             final String summary,
             final ObjectAdapter object,
             final ObjectAssociation field,
@@ -315,10 +315,10 @@ public class TableView extends AbstractTableView {
             headers[h++] = fields.get(i).getName();
         }
         
-        final RequestContext context = request.getContext();
-        final TableContentWriter rowBuilder = rowBuilder(request, context, null, context.mapObject(object, Scope.REQUEST), field.getIdentifier().getMemberName(), fields, 
+        final Request context = tagProcessor.getContext();
+        final TableContentWriter rowBuilder = rowBuilder(tagProcessor, context, null, context.mapObject(object, Scope.REQUEST), field.getIdentifier().getMemberName(), fields, 
                 showIconByDefault);
-        write(request, collection, summary, rowBuilder, null, null, null);
+        write(tagProcessor, collection, summary, rowBuilder, null, null, null);
     }
 
     @Override

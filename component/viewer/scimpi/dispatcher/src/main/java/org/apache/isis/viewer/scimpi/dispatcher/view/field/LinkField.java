@@ -19,21 +19,20 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.field;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class LinkField extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String field = request.getOptionalProperty(NAME);
-        final String variable = request.getOptionalProperty(REFERENCE_NAME, RequestContext.RESULT);
-        final String scope = request.getOptionalProperty(SCOPE, Scope.INTERACTION.toString());
-        final String forwardView = request.getOptionalProperty(VIEW, "_generic." + Dispatcher.EXTENSION);
-        final LinkedFieldsBlock tag = (LinkedFieldsBlock) request.getBlockContent();
+    public void process(final TagProcessor tagProcessor) {
+        final String field = tagProcessor.getOptionalProperty(NAME);
+        final String variable = tagProcessor.getOptionalProperty(REFERENCE_NAME, Names.RESULT);
+        final String scope = tagProcessor.getOptionalProperty(SCOPE, Scope.INTERACTION.toString());
+        final String forwardView = tagProcessor.getOptionalProperty(VIEW, "_generic." + Names.EXTENSION);
+        final LinkedFieldsBlock tag = (LinkedFieldsBlock) tagProcessor.getBlockContent();
         tag.link(field, variable, scope, forwardView);
     }
 

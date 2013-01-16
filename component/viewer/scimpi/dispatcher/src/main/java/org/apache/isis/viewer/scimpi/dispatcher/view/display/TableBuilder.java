@@ -23,28 +23,28 @@ import java.util.List;
 
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.PageWriter;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request.RepeatMarker;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor.RepeatMarker;
 
 public class TableBuilder extends AbstractTableView {
 
     @Override
-    protected TableContentWriter createRowBuilder(final Request request, final RequestContext context, final String parent, final List<ObjectAssociation> allFields, final ObjectAdapter collection) {
+    protected TableContentWriter createRowBuilder(final TagProcessor tagProcessor, final Request context, final String parent, final List<ObjectAssociation> allFields, final ObjectAdapter collection) {
 
-        final String title = request.getOptionalProperty(TABLE_TITLE);
-        final String variable = request.getOptionalProperty(ELEMENT_NAME, ELEMENT);
-        final String headerClass = request.getOptionalProperty("head-" + CLASS);
+        final String title = tagProcessor.getOptionalProperty(TABLE_TITLE);
+        final String variable = tagProcessor.getOptionalProperty(ELEMENT_NAME, ELEMENT);
+        final String headerClass = tagProcessor.getOptionalProperty("head-" + CLASS);
 
         final TableBlock block = new TableBlock();
         block.setCollection(collection);
         block.setElementName(variable);
-        request.setBlockContent(block);
-        request.pushNewBuffer();
-        request.processUtilCloseTag();
-        final String headers = request.popBuffer();       
+        tagProcessor.setBlockContent(block);
+        tagProcessor.pushNewBuffer();
+        tagProcessor.processUtilCloseTag();
+        final String headers = tagProcessor.popBuffer();       
         return new TableContentWriter() {
 
             @Override
@@ -52,7 +52,7 @@ public class TableBuilder extends AbstractTableView {
             }
 
             public void tidyUp() {
-                request.popBlockContent();
+                tagProcessor.popBlockContent();
             }
             
             @Override
@@ -73,12 +73,12 @@ public class TableBuilder extends AbstractTableView {
             }
 
             @Override
-            public void writeElement(final Request request, final RequestContext context, final ObjectAdapter element) {
+            public void writeElement(final TagProcessor tagProcessor, final Request context, final ObjectAdapter element) {
                 context.addVariable(variable, context.mapObject(element, Scope.REQUEST), Scope.REQUEST);
-                final RepeatMarker end = request.createMarker();
+                final RepeatMarker end = tagProcessor.createMarker();
                 final RepeatMarker marker = block.getMarker();
                 marker.repeat();
-                request.processUtilCloseTag();
+                tagProcessor.processUtilCloseTag();
                 end.repeat();
             }
         };

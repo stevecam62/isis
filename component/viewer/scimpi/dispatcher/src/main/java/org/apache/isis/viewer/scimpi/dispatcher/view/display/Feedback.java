@@ -19,22 +19,22 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.display;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Feedback extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String cls = request.getOptionalProperty(CLASS);
+    public void process(final TagProcessor tagProcessor) {
+        final String cls = tagProcessor.getOptionalProperty(CLASS);
         final StringBuffer buffer = new StringBuffer();
-        Errors.write(request, cls, buffer);
+        Errors.write(tagProcessor, cls, buffer);
         Warnings.write(cls, buffer);
         Messages.write(cls, buffer);
         if (buffer.length() > 0) {
-            request.appendHtml("<div class=\"feedback\">");
-            request.appendHtml(buffer.toString());
-            request.appendHtml("</div>");
+            tagProcessor.appendHtml("<div class=\"feedback\">");
+            tagProcessor.appendHtml(buffer.toString());
+            tagProcessor.appendHtml("</div>");
         }
     }
 

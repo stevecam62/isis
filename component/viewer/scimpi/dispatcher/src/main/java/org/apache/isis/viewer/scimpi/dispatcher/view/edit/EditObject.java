@@ -33,16 +33,18 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectAssociationFilters;
 import org.apache.isis.core.progmodel.facets.object.choices.enums.EnumFacet;
 import org.apache.isis.core.progmodel.facets.value.booleans.BooleanValueFacet;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.edit.EditAction;
-import org.apache.isis.viewer.scimpi.dispatcher.edit.FieldEditState;
-import org.apache.isis.viewer.scimpi.dispatcher.edit.FormState;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.action.EditAction;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.structure.FieldEditState;
+import org.apache.isis.viewer.scimpi.dispatcher.structure.FormState;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.form.HiddenInputField;
 import org.apache.isis.viewer.scimpi.dispatcher.view.form.HtmlFormBuilder;
 import org.apache.isis.viewer.scimpi.dispatcher.view.form.InputField;
+import org.apache.isis.viewer.scimpi.dispatcher.view.widget.FieldFactory;
+import org.apache.isis.viewer.scimpi.dispatcher.view.widget.FormFieldBlock;
 
 public class EditObject extends AbstractElementProcessor {
 
@@ -50,30 +52,30 @@ public class EditObject extends AbstractElementProcessor {
     private final Where where = Where.OBJECT_FORMS;
 
     @Override
-    public void process(final Request request) {
-        final RequestContext context = request.getContext();
+    public void process(final TagProcessor tagProcessor) {
+        final Request context = tagProcessor.getContext();
 
-        final String objectId = request.getOptionalProperty(OBJECT);
-        final String forwardEditedTo = request.getOptionalProperty(VIEW);
-        final String forwardErrorTo = request.getOptionalProperty(ERROR);
-        final String cancelTo = request.getOptionalProperty(CANCEL_TO); 
-        final boolean hideNonEditableFields = request.isRequested(HIDE_UNEDITABLE, false);
-        final boolean showIcon = request.isRequested(SHOW_ICON, showIconByDefault());
-        final String labelDelimiter = request.getOptionalProperty(LABEL_DELIMITER, ":");
-        String buttonTitle = request.getOptionalProperty(BUTTON_TITLE);
-        String formTitle = request.getOptionalProperty(FORM_TITLE);
-        final String formId = request.getOptionalProperty(FORM_ID, request.nextFormId());
-        final String variable = request.getOptionalProperty(RESULT_NAME);
-        final String resultOverride = request.getOptionalProperty(RESULT_OVERRIDE);
-        final String scope = request.getOptionalProperty(SCOPE);
-        final String className = request.getOptionalProperty(CLASS, "edit full");
-        final String completionMessage = request.getOptionalProperty(MESSAGE);
+        final String objectId = tagProcessor.getOptionalProperty(OBJECT);
+        final String forwardEditedTo = tagProcessor.getOptionalProperty(VIEW);
+        final String forwardErrorTo = tagProcessor.getOptionalProperty(ERROR);
+        final String cancelTo = tagProcessor.getOptionalProperty(CANCEL_TO); 
+        final boolean hideNonEditableFields = tagProcessor.isRequested(HIDE_UNEDITABLE, false);
+        final boolean showIcon = tagProcessor.isRequested(SHOW_ICON, showIconByDefault());
+        final String labelDelimiter = tagProcessor.getOptionalProperty(LABEL_DELIMITER, ":");
+        String buttonTitle = tagProcessor.getOptionalProperty(BUTTON_TITLE);
+        String formTitle = tagProcessor.getOptionalProperty(FORM_TITLE);
+        final String formId = tagProcessor.getOptionalProperty(FORM_ID, tagProcessor.nextFormId());
+        final String variable = tagProcessor.getOptionalProperty(RESULT_NAME);
+        final String resultOverride = tagProcessor.getOptionalProperty(RESULT_OVERRIDE);
+        final String scope = tagProcessor.getOptionalProperty(SCOPE);
+        final String className = tagProcessor.getOptionalProperty(CLASS, "edit full");
+        final String completionMessage = tagProcessor.getOptionalProperty(MESSAGE);
 
         final ObjectAdapter object = context.getMappedObjectOrResult(objectId);
         final String actualObjectId = context.mapObject(object, Scope.INTERACTION);
         final String version = context.mapVersion(object);
 
-        final String id = request.getOptionalProperty(ID, object.getSpecification().getShortIdentifier());
+        final String id = tagProcessor.getOptionalProperty(ID, object.getSpecification().getShortIdentifier());
 
         final FormState entryState = (FormState) context.getVariable(ENTRY_FIELDS);
 
@@ -108,8 +110,8 @@ public class EditObject extends AbstractElementProcessor {
             }
         };
 
-        request.setBlockContent(containedBlock);
-        request.processUtilCloseTag();
+        tagProcessor.setBlockContent(containedBlock);
+        tagProcessor.processUtilCloseTag();
 
         final AuthenticationSession session = IsisContext.getAuthenticationSession();
         List<ObjectAssociation> viewFields = specification.getAssociations(ObjectAssociationFilters.dynamicallyVisible(session, object, where));
@@ -163,9 +165,9 @@ public class EditObject extends AbstractElementProcessor {
         }
 
         final HiddenInputField[] hiddenFieldArray = hiddenFields.toArray(new HiddenInputField[hiddenFields.size()]);
-        HtmlFormBuilder.createForm(request, EditAction.ACTION + ".app", hiddenFieldArray, formFields, className, id, formTitle,
+        HtmlFormBuilder.createForm(tagProcessor, EditAction.ACTION + ".app", hiddenFieldArray, formFields, className, id, formTitle,
                 labelDelimiter, null, null, buttonTitle, errors, cancelTo);
-     request.popBlockContent();
+     tagProcessor.popBlockContent();
     }
 
     private InputField[] createFields(final List<ObjectAssociation> fields) {
@@ -187,7 +189,7 @@ public class EditObject extends AbstractElementProcessor {
     }
 
     // TODO duplicated in ActionForm#initializeFields
-    private void initializeFields(final RequestContext context, final ObjectAdapter object, final InputField[] formFields, final FormState entryState, final boolean includeUnusableFields) {
+    private void initializeFields(final Request context, final ObjectAdapter object, final InputField[] formFields, final FormState entryState, final boolean includeUnusableFields) {
         for (final InputField formField : formFields) {
             final String fieldId = formField.getName();
             final ObjectAssociation field = object.getSpecification().getAssociation(fieldId);
@@ -210,7 +212,7 @@ public class EditObject extends AbstractElementProcessor {
         }
     }
 
-    private void copyFieldContent(final RequestContext context, final ObjectAdapter object, final InputField[] formFields, final boolean showIcon) {
+    private void copyFieldContent(final Request context, final ObjectAdapter object, final InputField[] formFields, final boolean showIcon) {
         for (final InputField inputField : formFields) {
             final String fieldName = inputField.getName();
             final ObjectAssociation field = object.getSpecification().getAssociation(fieldName);
@@ -243,7 +245,7 @@ public class EditObject extends AbstractElementProcessor {
         }
     }
 
-    private void setDefaults(final RequestContext context, final ObjectAdapter object, final InputField[] formFields, final FormState entryState, final boolean showIcon) {
+    private void setDefaults(final Request context, final ObjectAdapter object, final InputField[] formFields, final FormState entryState, final boolean showIcon) {
         for (final InputField formField : formFields) {
             final String fieldId = formField.getName();
             final ObjectAssociation field = object.getSpecification().getAssociation(fieldId);
@@ -268,7 +270,7 @@ public class EditObject extends AbstractElementProcessor {
         }
     }
 
-    private void overrideWithHtml(final RequestContext context, final FormFieldBlock containedBlock, final InputField[] formFields) {
+    private void overrideWithHtml(final Request context, final FormFieldBlock containedBlock, final InputField[] formFields) {
         for (final InputField formField : formFields) {
             final String fieldId = formField.getName();
             if (containedBlock.hasContent(fieldId)) {
@@ -282,7 +284,7 @@ public class EditObject extends AbstractElementProcessor {
         }
     }
 
-    private void copyEntryState(final RequestContext context, final ObjectAdapter object, final InputField[] formFields, final FormState entryState) {
+    private void copyEntryState(final Request context, final ObjectAdapter object, final InputField[] formFields, final FormState entryState) {
         for (final InputField formField : formFields) {
             final String fieldId = formField.getName();
             final ObjectAssociation field = object.getSpecification().getAssociation(fieldId);
@@ -296,7 +298,7 @@ public class EditObject extends AbstractElementProcessor {
         }
     }
 
-    private String getValue(final RequestContext context, final ObjectAdapter field) {
+    private String getValue(final Request context, final ObjectAdapter field) {
         if (field == null || field.isTransient()) {
             return "";
         }

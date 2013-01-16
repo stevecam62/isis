@@ -23,33 +23,33 @@ import java.util.List;
 
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractObjectProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.view.HelpLink;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractObjectProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.field.LinkedObject;
+import org.apache.isis.viewer.scimpi.dispatcher.view.other.HelpLink;
 
 public class DebugCollectionView extends AbstractObjectProcessor {
 
     @Override
-    public void process(final Request request, final ObjectAdapter object) {
-        final String cls = request.getOptionalProperty(CLASS, "form");
+    public void process(final TagProcessor tagProcessor, final ObjectAdapter object) {
+        final String cls = tagProcessor.getOptionalProperty(CLASS, "form");
         final String classString = " class=\"" + cls + "\"";
-        String title = request.getOptionalProperty(FORM_TITLE);
-        final String oddRowClass = request.getOptionalProperty(ODD_ROW_CLASS);
-        final String evenRowClass = request.getOptionalProperty(EVEN_ROW_CLASS);
-        final boolean showIcons = request.isRequested(SHOW_ICON, true);
+        String title = tagProcessor.getOptionalProperty(FORM_TITLE);
+        final String oddRowClass = tagProcessor.getOptionalProperty(ODD_ROW_CLASS);
+        final String evenRowClass = tagProcessor.getOptionalProperty(EVEN_ROW_CLASS);
+        final boolean showIcons = tagProcessor.isRequested(SHOW_ICON, true);
 
     }
 
-    private void write(final Request request, final ObjectAdapter object, final List<ObjectAssociation> fields,
+    private void write(final TagProcessor tagProcessor, final ObjectAdapter object, final List<ObjectAssociation> fields,
         final LinkedObject[] linkFields, final String classString, final String title, final String oddRowClass,
         final String evenRowClass, final boolean showIcons) {
-        request.appendHtml("<div" + classString + ">");
+        tagProcessor.appendHtml("<div" + classString + ">");
         if (title != null) {
-            request.appendHtml("<div class=\"title\">");
-            request.appendAsHtmlEncoded(title);
-            request.appendHtml("</div>");
-            HelpLink.append(request, object.getSpecification().getDescription(), object.getSpecification().getHelp());
+            tagProcessor.appendHtml("<div class=\"title\">");
+            tagProcessor.appendAsHtmlEncoded(title);
+            tagProcessor.appendHtml("</div>");
+            HelpLink.append(tagProcessor, object.getSpecification().getDescription(), object.getSpecification().getHelp());
         }
      /*   
         final List<ObjectAssociation> fields =
@@ -97,7 +97,7 @@ public class DebugCollectionView extends AbstractObjectProcessor {
             request.appendHtml("</div>");
         }
         */
-        request.appendHtml("</div>");
+        tagProcessor.appendHtml("</div>");
         
     }
 

@@ -25,24 +25,24 @@ import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.facets.collections.modify.CollectionFacet;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request.RepeatMarker;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor.RepeatMarker;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Collection extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final RequestContext context = request.getContext();
+    public void process(final TagProcessor tagProcessor) {
+        final Request context = tagProcessor.getContext();
 
         ObjectAdapter collection;
 
-        final String field = request.getOptionalProperty(FIELD);
+        final String field = tagProcessor.getOptionalProperty(FIELD);
         if (field != null) {
-            final String id = request.getOptionalProperty(OBJECT);
+            final String id = tagProcessor.getOptionalProperty(OBJECT);
             final ObjectAdapter object = context.getMappedObjectOrResult(id);
             final ObjectAssociation objectField = object.getSpecification().getAssociation(field);
             if (!objectField.isOneToManyAssociation()) {
@@ -51,16 +51,16 @@ public class Collection extends AbstractElementProcessor {
             IsisContext.getPersistenceSession().resolveField(object, objectField);
             collection = objectField.get(object);
         } else {
-            final String id = request.getOptionalProperty(COLLECTION);
+            final String id = tagProcessor.getOptionalProperty(COLLECTION);
             collection = context.getMappedObjectOrResult(id);
         }
 
-        final RepeatMarker marker = request.createMarker();
+        final RepeatMarker marker = tagProcessor.createMarker();
 
-        final String variable = request.getOptionalProperty(ELEMENT_NAME);
-        final String scopeName = request.getOptionalProperty(SCOPE);
-        final Scope scope = RequestContext.scope(scopeName, Scope.REQUEST);
-        final String rowClassesList = request.getOptionalProperty(ROW_CLASSES, ODD_ROW_CLASS + "|" + EVEN_ROW_CLASS);
+        final String variable = tagProcessor.getOptionalProperty(ELEMENT_NAME);
+        final String scopeName = tagProcessor.getOptionalProperty(SCOPE);
+        final Scope scope = Request.scope(scopeName, Scope.REQUEST);
+        final String rowClassesList = tagProcessor.getOptionalProperty(ROW_CLASSES, ODD_ROW_CLASS + "|" + EVEN_ROW_CLASS);
         String[] rowClasses = new String[0];
         if (rowClassesList != null) {
             rowClasses = rowClassesList.split("[,|/]");
@@ -68,7 +68,7 @@ public class Collection extends AbstractElementProcessor {
 
         final CollectionFacet facet = collection.getSpecification().getFacet(CollectionFacet.class);
         if (facet.size(collection) == 0) {
-            request.skipUntilClose();
+            tagProcessor.skipUntilClose();
         } else {
             final Iterator<ObjectAdapter> iterator = facet.iterator(collection);
             int row = 0;
@@ -80,7 +80,7 @@ public class Collection extends AbstractElementProcessor {
                 }
                 context.addVariable(variable, context.mapObject(element, scope), scope);
                 marker.repeat();
-                request.processUtilCloseTag();
+                tagProcessor.processUtilCloseTag();
                 row++;
             }
         }

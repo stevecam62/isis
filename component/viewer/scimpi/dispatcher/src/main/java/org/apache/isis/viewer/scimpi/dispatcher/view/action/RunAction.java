@@ -25,12 +25,12 @@ import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
 import org.apache.isis.core.metamodel.spec.feature.ObjectActionParameter;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class RunAction extends AbstractElementProcessor {
 
@@ -42,22 +42,22 @@ public class RunAction extends AbstractElementProcessor {
     private final Where where = Where.ANYWHERE;
 
     @Override
-    public void process(final Request request) {
-        final RequestContext context = request.getContext();
+    public void process(final TagProcessor tagProcessor) {
+        final Request context = tagProcessor.getContext();
 
-        final String objectId = request.getOptionalProperty(OBJECT);
+        final String objectId = tagProcessor.getOptionalProperty(OBJECT);
         final ObjectAdapter object = MethodsUtils.findObject(context, objectId);
 
-        final String methodName = request.getRequiredProperty(METHOD);
+        final String methodName = tagProcessor.getRequiredProperty(METHOD);
         final ObjectAction action = MethodsUtils.findAction(object, methodName);
 
-        final String variableName = request.getOptionalProperty(RESULT_NAME);
-        final String scopeName = request.getOptionalProperty(SCOPE);
+        final String variableName = tagProcessor.getOptionalProperty(RESULT_NAME);
+        final String scopeName = tagProcessor.getOptionalProperty(SCOPE);
 
         final ActionContent parameterBlock = new ActionContent(action);
-        request.setBlockContent(parameterBlock);
-        request.processUtilCloseTag();
-        final ObjectAdapter[] parameters = parameterBlock.getParameters(request);
+        tagProcessor.setBlockContent(parameterBlock);
+        tagProcessor.processUtilCloseTag();
+        final ObjectAdapter[] parameters = parameterBlock.getParameters(tagProcessor);
 
         if (!MethodsUtils.isVisibleAndUsable(object, action, where)) {
             throw new ForbiddenException(action, ForbiddenException.VISIBLE_AND_USABLE);
@@ -74,9 +74,9 @@ public class RunAction extends AbstractElementProcessor {
             }
         }
 
-        final Scope scope = RequestContext.scope(scopeName, Scope.REQUEST);
+        final Scope scope = Request.scope(scopeName, Scope.REQUEST);
         MethodsUtils.runMethod(context, action, object, parameters, variableName, scope);
-        request.popBlockContent();
+        tagProcessor.popBlockContent();
     }
 
     @Override

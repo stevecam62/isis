@@ -35,10 +35,10 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
 import org.apache.isis.core.metamodel.spec.feature.ObjectActionContainer.Contributed;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public abstract class AbstractConditionalBlock extends AbstractElementProcessor {
 
@@ -107,24 +107,24 @@ public abstract class AbstractConditionalBlock extends AbstractElementProcessor 
     }
 
     @Override
-    public void process(final Request request) {
-        final String id = request.getOptionalProperty(OBJECT);
+    public void process(final TagProcessor tagProcessor) {
+        final String id = tagProcessor.getOptionalProperty(OBJECT);
 
         boolean checkMade = false;
         boolean allConditionsMet = true;
 
-        final String[] propertyNames = request.getAttributes().getPropertyNames(new String[] { "object", "collection" });
+        final String[] propertyNames = tagProcessor.getAttributes().getPropertyNames(new String[] { "object", "collection" });
         for (final String propertyName : propertyNames) {
             boolean result;
             if (propertyName.equals("set")) {
-                result = request.isPropertySet("set");
+                result = tagProcessor.isPropertySet("set");
             } else {
                 final Test test = tests.get(propertyName);
                 if (test == null) {
                     throw new ScimpiException("No such test: " + propertyName);
                 }
-                final String attributeValue = request.getOptionalProperty(propertyName, false);
-                result = test.test(request, attributeValue, id);
+                final String attributeValue = tagProcessor.getOptionalProperty(propertyName, false);
+                result = test.test(tagProcessor, attributeValue, id);
                 if (test.negateResult) {
                     result = !result;
                 }
@@ -263,9 +263,9 @@ public abstract class AbstractConditionalBlock extends AbstractElementProcessor 
          * &= hasMatchingRole; }
          */
 
-        final String persistent = request.getOptionalProperty("persistent");
+        final String persistent = tagProcessor.getOptionalProperty("persistent");
         if (persistent != null) {
-            final ObjectAdapter object = request.getContext().getMappedObjectOrResult(persistent);
+            final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(persistent);
             checkMade = true;
             allConditionsMet &= object.representsPersistent();
         }
@@ -277,11 +277,11 @@ public abstract class AbstractConditionalBlock extends AbstractElementProcessor 
          * cls.isAssignableFrom(object.getObject().getClass())); checkMade =
          * true; allConditionsMet &= hasType;; }
          */
-        if (request.isPropertySpecified("empty")) {
-            if (request.isPropertySet("empty")) {
-                final String collection = request.getOptionalProperty("empty");
+        if (tagProcessor.isPropertySpecified("empty")) {
+            if (tagProcessor.isPropertySet("empty")) {
+                final String collection = tagProcessor.getOptionalProperty("empty");
                 if (collection != null) {
-                    final ObjectAdapter object = request.getContext().getMappedObjectOrResult(collection);
+                    final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(collection);
                     final CollectionFacet facet = object.getSpecification().getFacet(CollectionFacet.class);
                     checkMade = true;
                     allConditionsMet &= facet.size(object) == 0;
@@ -292,20 +292,20 @@ public abstract class AbstractConditionalBlock extends AbstractElementProcessor 
             }
         }
 
-        if (request.isPropertySpecified("set")) {
-            final boolean valuePresent = request.isPropertySet("set");
+        if (tagProcessor.isPropertySpecified("set")) {
+            final boolean valuePresent = tagProcessor.isPropertySet("set");
             checkMade = true;
             allConditionsMet &= valuePresent;
         }
 
         if (checkMade) {
-            processTags(allConditionsMet, request);
+            processTags(allConditionsMet, tagProcessor);
         } else {
             throw new ScimpiException("No condition in " + getName());
         }
     }
 
-    protected abstract void processTags(boolean isSet, Request request);
+    protected abstract void processTags(boolean isSet, TagProcessor tagProcessor);
 
 }
 
@@ -313,7 +313,7 @@ abstract class Test {
     String name;
     boolean negateResult;
 
-    abstract boolean test(Request request, String attributeName, String targetId);
+    abstract boolean test(TagProcessor tagProcessor, String attributeName, String targetId);
 
     protected Class<?> forClass(final String className) {
         Class<?> cls = null;
@@ -347,8 +347,8 @@ abstract class Test {
 
 class TestVariableExists extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        Object variable = request.getContext().getVariable(attributeName);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        Object variable = tagProcessor.getContext().getVariable(attributeName);
         if (variable instanceof String && ((String) variable).equals("")) {
             return false;
         }
@@ -358,8 +358,8 @@ class TestVariableExists extends Test {
 
 class TestVariableTrue extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final Object variable = request.getContext().getVariable(attributeName);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final Object variable = tagProcessor.getContext().getVariable(attributeName);
         final Boolean value = variable instanceof Boolean ? (Boolean) variable : Boolean.valueOf((String) variable);
         return value != null && value.booleanValue();
     }
@@ -367,16 +367,16 @@ class TestVariableTrue extends Test {
 
 class TestObjectPersistent extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = request.getContext().getMappedObjectOrResult(attributeName);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(attributeName);
         return object.representsPersistent();
     }
 }
 
 class TestObjectType extends TestObjectPersistent {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         final Class<?> cls = forClass(attributeName);
         final boolean hasType = object != null && (cls == null || cls.isAssignableFrom(object.getObject().getClass()));
         return hasType;
@@ -385,8 +385,8 @@ class TestObjectType extends TestObjectPersistent {
 
 class TestCollectionType extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         final Class<?> cls = forClass(attributeName);
         final TypeOfFacet facet = object.getSpecification().getFacet(TypeOfFacet.class);
         final boolean hasType = object != null && (cls == null || cls.isAssignableFrom(facet.value()));
@@ -396,8 +396,8 @@ class TestCollectionType extends Test {
 
 class TestCollectionFull extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), attributeName);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), attributeName);
         final CollectionFacet facet = object.getSpecification().getFacet(CollectionFacet.class);
         final boolean isEmpty = facet != null && facet.size(object) == 0;
         return !isEmpty;
@@ -406,8 +406,8 @@ class TestCollectionFull extends Test {
 
 class TestMethodExists extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         final List<? extends ObjectAction> objectActions = object.getSpecification().getObjectActions(ActionType.USER, Contributed.INCLUDED);
         boolean methodExists = false;
         for (final ObjectAction objectAssociation : objectActions) {
@@ -422,8 +422,8 @@ class TestMethodExists extends Test {
 
 class TestMethodVisible extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         // TODO needs to work irrespective of parameters
         final ObjectAction objectAction = findMethod(attributeName, object);
         final Consent visible = objectAction.isVisible(IsisContext.getAuthenticationSession(), object, Where.ANYWHERE);
@@ -433,8 +433,8 @@ class TestMethodVisible extends Test {
 
 class TestMethodUseable extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         // TODO needs to work irrespective of parameters
         final ObjectAction objectAction = findMethod(attributeName, object);
         final Consent usable = objectAction.isUsable(IsisContext.getAuthenticationSession(), object, Where.ANYWHERE);
@@ -444,8 +444,8 @@ class TestMethodUseable extends Test {
 
 class TestFieldExists extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         final List<? extends ObjectAssociation> objectFields = object.getSpecification().getAssociations();
         boolean fieldExists = false;
         for (final ObjectAssociation objectAssociation : objectFields) {
@@ -460,8 +460,8 @@ class TestFieldExists extends Test {
 
 class TestFieldVisible extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         final ObjectAssociation objectField = findProperty(attributeName, object);
         final Consent visible = objectField.isVisible(IsisContext.getAuthenticationSession(), object, Where.ANYWHERE);
         return visible.isAllowed();
@@ -470,8 +470,8 @@ class TestFieldVisible extends Test {
 
 class TestFieldEditable extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         final ObjectAssociation objectField = findProperty(attributeName, object);
         final Consent usable = objectField.isUsable(IsisContext.getAuthenticationSession(), object, Where.ANYWHERE);
         return usable.isAllowed();
@@ -480,8 +480,8 @@ class TestFieldEditable extends Test {
 
 class TestFieldType extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         final Class<?> cls = forClass(attributeName);
         final boolean hasType = object != null && (cls == null || cls.isAssignableFrom(object.getObject().getClass()));
         return hasType;
@@ -490,8 +490,8 @@ class TestFieldType extends Test {
 
 class TestFieldSet extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         final ObjectAssociation objectField = findProperty(attributeName, object);
         IsisContext.getPersistenceSession().resolveField(object, objectField);
         final ObjectAdapter fld = objectField.get(object);
@@ -513,20 +513,20 @@ class TestFieldSet extends Test {
 
 class TestFieldValue extends Test {
     @Override
-    boolean test(Request request, String attributeName, String targetId) {
+    boolean test(TagProcessor tagProcessor, String attributeName, String targetId) {
         int pos = attributeName.indexOf("==");
         // TODO test for other comparators
         // TODO fail properly if none found
         String fieldName = attributeName.substring(0, pos);
         String fieldValue = attributeName.substring(pos + 2);
         
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), targetId);
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), targetId);
         final ObjectAssociation objectField = findProperty(fieldName, object);
         IsisContext.getPersistenceSession().resolveField(object, objectField);
         final ObjectAdapter fld = objectField.get(object);
         
         // TODO test for reference or value
-        final ObjectAdapter object2 = MethodsUtils.findObject(request.getContext(), fieldValue);
+        final ObjectAdapter object2 = MethodsUtils.findObject(tagProcessor.getContext(), fieldValue);
         
         if (fld == object2) {
             return true;
@@ -538,7 +538,7 @@ class TestFieldValue extends Test {
 
 class TestHasRole extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
         final String[] requiredRoles = attributeName.split("\\|");
         final AuthenticationSession session = IsisContext.getSession().getAuthenticationSession();
         final List<String> sessionRoles = session.getRoles();
@@ -555,8 +555,8 @@ class TestHasRole extends Test {
 
 class TestSet extends Test {
     @Override
-    boolean test(final Request request, final String attributeName, final String targetId) {
-        final boolean valuePresent = request.isPropertySet("set");
+    boolean test(final TagProcessor tagProcessor, final String attributeName, final String targetId) {
+        final boolean valuePresent = tagProcessor.isPropertySet("set");
         return valuePresent;
     }
 }

@@ -21,7 +21,6 @@ package org.apache.isis.viewer.scimpi.dispatcher.context;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -30,7 +29,7 @@ import com.google.common.collect.Maps;
 import org.apache.isis.core.commons.debug.DebugBuilder;
 import org.apache.isis.core.commons.exceptions.NotYetImplementedException;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
 
 public class IndirectObjectMapping implements ObjectMapping {
     private final Map<Scope, Map<String, Mapping>> scopedMappings = Maps.newLinkedHashMap();

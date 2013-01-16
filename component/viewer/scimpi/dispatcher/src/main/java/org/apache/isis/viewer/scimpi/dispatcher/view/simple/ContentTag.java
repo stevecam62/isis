@@ -18,8 +18,8 @@
  */
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.ElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.ElementProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 
 public class ContentTag implements ElementProcessor {
 
@@ -29,8 +29,8 @@ public class ContentTag implements ElementProcessor {
     }
 
     @Override
-    public void process(final Request request) {
-        request.appendHtml("<!--  apply content  -->");
+    public void process(final TagProcessor tagProcessor) {
+        tagProcessor.appendHtml("<!--  apply content  -->");
     }
 
 }

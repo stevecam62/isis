@@ -24,8 +24,8 @@ import java.util.TimeZone;
 
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.core.runtime.userprofile.UserLocalization;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 /**
  * Displays the localization data for the current user.
@@ -33,11 +33,11 @@ import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
 public class SetLocalization extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        request.closeEmpty();
+    public void process(final TagProcessor tagProcessor) {
+        tagProcessor.closeEmpty();
         
-        final String localeCode = request.getRequiredProperty("locale");
-        final String timeZone = request.getRequiredProperty("time-zone");
+        final String localeCode = tagProcessor.getRequiredProperty("locale");
+        final String timeZone = tagProcessor.getRequiredProperty("time-zone");
         
         String country;
         String language;

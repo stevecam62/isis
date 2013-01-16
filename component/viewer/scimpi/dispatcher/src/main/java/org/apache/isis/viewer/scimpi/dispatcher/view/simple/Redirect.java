@@ -18,8 +18,8 @@
  */
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Redirect extends AbstractElementProcessor {
 
@@ -29,9 +29,9 @@ public class Redirect extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final Request request) {
-        final String view = request.getRequiredProperty(VIEW);
-        request.getContext().redirectTo(view);
+    public void process(final TagProcessor tagProcessor) {
+        final String view = tagProcessor.getRequiredProperty(VIEW);
+        tagProcessor.getContext().redirectTo(view);
     }
 
 }

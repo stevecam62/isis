@@ -19,13 +19,14 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher;
 
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 
 public class TagOrderException extends ScimpiException {
     private static final long serialVersionUID = 1L;
 
-    public TagOrderException(final Request request) {
-        super("Invalid tag in this context: " + request.getTag().getName());
+    public TagOrderException(final TagProcessor tagProcessor) {
+        super("Invalid tag in this context: " + tagProcessor.getTag().getName());
     }
 
 }

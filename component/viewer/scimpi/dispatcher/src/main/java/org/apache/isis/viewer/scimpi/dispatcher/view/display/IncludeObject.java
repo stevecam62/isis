@@ -30,10 +30,10 @@ import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 /**
  * Element to include another file that will display an object.
@@ -48,29 +48,29 @@ public class IncludeObject extends AbstractElementProcessor {
     private final Where where = Where.ANYWHERE;
 
     @Override
-    public void process(final Request request) {
-        final String path = request.getOptionalProperty("file");
-        String id = request.getOptionalProperty(OBJECT);
-        final String fieldName = request.getOptionalProperty(FIELD);
-        ObjectAdapter object = request.getContext().getMappedObjectOrResult(id);
+    public void process(final TagProcessor tagProcessor) {
+        final String path = tagProcessor.getOptionalProperty("file");
+        String id = tagProcessor.getOptionalProperty(OBJECT);
+        final String fieldName = tagProcessor.getOptionalProperty(FIELD);
+        ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
         if (fieldName != null) {
             final ObjectAssociation field = object.getSpecification().getAssociation(fieldName);
             if (field.isVisible(IsisContext.getAuthenticationSession(), object, where).isVetoed()) {
                 throw new ForbiddenException(field, ForbiddenException.VISIBLE);
             }
             object = field.get(object);
-            id = request.getContext().mapObject(object, Scope.REQUEST);
+            id = tagProcessor.getContext().mapObject(object, Scope.REQUEST);
         }
 
         if (object != null) {
             IsisContext.getPersistenceSession().resolveImmediately(object);
-            request.getContext().addVariable("_object", id, Scope.REQUEST);
-            importFile(request, path);
+            tagProcessor.getContext().addVariable("_object", id, Scope.REQUEST);
+            importFile(tagProcessor, path);
         }
-        request.closeEmpty();
+        tagProcessor.closeEmpty();
     }
 
-    private static void importFile(final Request request, final String path) {
+    private static void importFile(final TagProcessor tagProcessor, final String path) {
         // TODO load in file via HtmlFileParser
         final File file = new File(path);
         BufferedReader reader = null;
@@ -79,10 +79,10 @@ public class IncludeObject extends AbstractElementProcessor {
                 reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    request.appendHtml(line);
+                    tagProcessor.appendHtml(line);
                 }
             } else {
-                request.appendHtml("<P classs=\"error\">File " + path + " not found to import</P>");
+                tagProcessor.appendHtml("<P classs=\"error\">File " + path + " not found to import</P>");
             }
         } catch (final FileNotFoundException e) {
             throw new RuntimeException(e);

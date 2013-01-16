@@ -20,9 +20,9 @@
 package org.apache.isis.viewer.scimpi.dispatcher.view.display;
 
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 /**
  * <swf:selected name="selected" object="${action}" equals="${subaction}" />
@@ -30,21 +30,21 @@ import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
 public class SelectedObject extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String name = request.getOptionalProperty(NAME, "selected");
-        final String objectId = request.getRequiredProperty(OBJECT);
-        final String equalsId = request.getOptionalProperty("equals");
-        final String title = request.getOptionalProperty(BUTTON_TITLE);
+    public void process(final TagProcessor tagProcessor) {
+        final String name = tagProcessor.getOptionalProperty(NAME, "selected");
+        final String objectId = tagProcessor.getRequiredProperty(OBJECT);
+        final String equalsId = tagProcessor.getOptionalProperty("equals");
+        final String title = tagProcessor.getOptionalProperty(BUTTON_TITLE);
 
-        final ObjectAdapter object = request.getContext().getMappedObjectOrResult(objectId);
-        final ObjectAdapter other = request.getContext().getMappedObjectOrResult(equalsId);
+        final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(objectId);
+        final ObjectAdapter other = tagProcessor.getContext().getMappedObjectOrResult(equalsId);
         if (object == other || object.equals(title)) {
             // TODO title is not being used!
-            request.getContext().addVariable(ID, " id=\"" + name + "\" ", Scope.INTERACTION);
+            tagProcessor.getContext().addVariable(ID, " id=\"" + name + "\" ", Scope.INTERACTION);
         } else {
-            request.getContext().addVariable(ID, "", Scope.INTERACTION);
+            tagProcessor.getContext().addVariable(ID, "", Scope.INTERACTION);
         }
-        request.closeEmpty();
+        tagProcessor.closeEmpty();
     }
 
     @Override

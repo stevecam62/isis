@@ -23,30 +23,31 @@ import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public abstract class AbstractLink extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String title = request.getOptionalProperty(FORM_TITLE);
-        final String name = request.getOptionalProperty(NAME);
-        final boolean showAsButton = request.isRequested("show-as-button", false);
-        final String linkClass = request.getOptionalProperty(CLASS, showAsButton ? "button" : defaultLinkClass());
-        final String containerClass = request.getOptionalProperty(CONTAINER_CLASS, "action");
-        final String object = request.getOptionalProperty(OBJECT);
-        final RequestContext context = request.getContext();
-        String objectId = object != null ? object : (String) context.getVariable(RequestContext.RESULT);
+    public void process(final TagProcessor tagProcessor) {
+        final String title = tagProcessor.getOptionalProperty(FORM_TITLE);
+        final String name = tagProcessor.getOptionalProperty(NAME);
+        final boolean showAsButton = tagProcessor.isRequested("show-as-button", false);
+        final String linkClass = tagProcessor.getOptionalProperty(CLASS, showAsButton ? "button" : defaultLinkClass());
+        final String containerClass = tagProcessor.getOptionalProperty(CONTAINER_CLASS, "action");
+        final String object = tagProcessor.getOptionalProperty(OBJECT);
+        final Request context = tagProcessor.getContext();
+        String objectId = object != null ? object : (String) context.getVariable(Names.RESULT);
         ObjectAdapter adapter = MethodsUtils.findObject(context, objectId);
 
         // REVIEW this is common used code
-        final String fieldName = request.getOptionalProperty(FIELD);
+        final String fieldName = tagProcessor.getOptionalProperty(FIELD);
         if (fieldName != null) {
             final ObjectAssociation field = adapter.getSpecification().getAssociation(fieldName);
             if (field == null) {
@@ -70,37 +71,37 @@ public abstract class AbstractLink extends AbstractElementProcessor {
             }
         }
 
-        if (adapter != null && valid(request, adapter)) {
-            final String variable = request.getOptionalProperty("param-name", RequestContext.RESULT);
+        if (adapter != null && valid(tagProcessor, adapter)) {
+            final String variable = tagProcessor.getOptionalProperty("param-name", Names.RESULT);
             final String variableSegment = variable + "=" + objectId;
 
-            String view = request.getOptionalProperty(VIEW);
+            String view = tagProcessor.getOptionalProperty(VIEW);
             if (view == null) {
                 view = defaultView();
             }
             view = context.fullUriPath(view);
             final String classSegment = " class=\"" + linkClass + "\"";
             final String titleSegment = title == null ? "" : (" title=\"" + title + "\"");
-            String additionalSegment = additionalParameters(request);
+            String additionalSegment = additionalParameters(tagProcessor);
             additionalSegment = additionalSegment == null ? "" : "&amp;" + additionalSegment;
             if (showAsButton) {
-                request.appendHtml("<div class=\"" + containerClass + "\">");
+                tagProcessor.appendHtml("<div class=\"" + containerClass + "\">");
             }
-            request.appendHtml("<a" + classSegment + titleSegment + " href=\"" + view + "?" + variableSegment + context.encodedInteractionParameters() + additionalSegment + "\">");
-            request.pushNewBuffer();
-            request.processUtilCloseTag();
-            final String buffer = request.popBuffer();
+            tagProcessor.appendHtml("<a" + classSegment + titleSegment + " href=\"" + view + "?" + variableSegment + context.encodedInteractionParameters() + additionalSegment + "\">");
+            tagProcessor.pushNewBuffer();
+            tagProcessor.processUtilCloseTag();
+            final String buffer = tagProcessor.popBuffer();
             if (buffer.trim().length() > 0) {
-                request.appendHtml(buffer);
+                tagProcessor.appendHtml(buffer);
             } else {
-                request.appendAsHtmlEncoded(linkLabel(name, adapter));
+                tagProcessor.appendAsHtmlEncoded(linkLabel(name, adapter));
             }
-            request.appendHtml("</a>");
+            tagProcessor.appendHtml("</a>");
             if (showAsButton) {
-                request.appendHtml("</div>");
+                tagProcessor.appendHtml("</div>");
             }
         } else {
-            request.skipUntilClose();
+            tagProcessor.skipUntilClose();
         }
     }
 
@@ -110,11 +111,11 @@ public abstract class AbstractLink extends AbstractElementProcessor {
 
     protected abstract String linkLabel(String name, ObjectAdapter object);
 
-    protected String additionalParameters(final Request request) {
+    protected String additionalParameters(final TagProcessor tagProcessor) {
         return null;
     }
 
-    protected abstract boolean valid(Request request, ObjectAdapter adapter);
+    protected abstract boolean valid(TagProcessor tagProcessor, ObjectAdapter adapter);
 
     protected abstract String defaultView();
 }

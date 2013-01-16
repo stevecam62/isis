@@ -26,18 +26,18 @@ import org.apache.isis.core.metamodel.spec.ObjectSpecification;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociationFilters;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.display.TableView.SimpleTableBuilder;
 import org.apache.isis.viewer.scimpi.dispatcher.view.field.LinkedObject;
 
 public class LongFormView extends AbstractFormView {
 
     @Override
-    protected void addField(final Request request, final ObjectAdapter object, final ObjectAssociation field, final LinkedObject linkedObject, final boolean showIcons) {
+    protected void addField(final TagProcessor tagProcessor, final ObjectAdapter object, final ObjectAssociation field, final LinkedObject linkedObject, final boolean showIcons) {
         if (field.isOneToManyAssociation()) {
-            final String noColumnsString = request.getOptionalProperty("no-columns", "3");
-            final String tableClass = request.getOptionalProperty("table-class");
-            final String rowClassesList = request.getOptionalProperty("row-classes", ODD_ROW_CLASS + "|" + EVEN_ROW_CLASS);
+            final String noColumnsString = tagProcessor.getOptionalProperty("no-columns", "3");
+            final String tableClass = tagProcessor.getOptionalProperty("table-class");
+            final String rowClassesList = tagProcessor.getOptionalProperty("row-classes", ODD_ROW_CLASS + "|" + EVEN_ROW_CLASS);
             String[] rowClasses = new String[0];
             if (rowClassesList != null) {
                 rowClasses = rowClassesList.split("[,|/]");
@@ -71,9 +71,9 @@ public class LongFormView extends AbstractFormView {
 
             final TableContentWriter rowBuilder =new SimpleTableBuilder(object.titleString(), true, false, "", noColumns, headers, fields, false,
                     showIcons, false, false, false, field.getName(), linkedFields, null);
-            TableView.write(request, collection, summary, rowBuilder, null, tableClass, rowClasses);
+            TableView.write(tagProcessor, collection, summary, rowBuilder, null, tableClass, rowClasses);
         } else {
-            super.addField(request, object, field, linkedObject, showIcons);
+            super.addField(tagProcessor, object, field, linkedObject, showIcons);
         }
     }
 

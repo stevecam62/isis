@@ -26,20 +26,21 @@ import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.ObjectSpecification;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
 import org.apache.isis.core.metamodel.spec.feature.ObjectActionParameter;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.action.ActionAction;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.edit.FieldEditState;
-import org.apache.isis.viewer.scimpi.dispatcher.edit.FormState;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.structure.FieldEditState;
+import org.apache.isis.viewer.scimpi.dispatcher.structure.FormState;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
-import org.apache.isis.viewer.scimpi.dispatcher.view.edit.FieldFactory;
-import org.apache.isis.viewer.scimpi.dispatcher.view.edit.FormFieldBlock;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.form.HiddenInputField;
 import org.apache.isis.viewer.scimpi.dispatcher.view.form.HtmlFormBuilder;
 import org.apache.isis.viewer.scimpi.dispatcher.view.form.InputField;
+import org.apache.isis.viewer.scimpi.dispatcher.view.widget.FieldFactory;
+import org.apache.isis.viewer.scimpi.dispatcher.view.widget.FormFieldBlock;
 
 public class ActionForm extends AbstractElementProcessor {
 
@@ -47,37 +48,37 @@ public class ActionForm extends AbstractElementProcessor {
     private final static Where where = Where.OBJECT_FORMS;
 
     @Override
-    public void process(final Request request) {
+    public void process(final TagProcessor tagProcessor) {
         final CreateFormParameter parameters = new CreateFormParameter();
-        parameters.objectId = request.getOptionalProperty(OBJECT);
-        parameters.methodName = request.getRequiredProperty(METHOD);
-        parameters.forwardResultTo = request.getOptionalProperty(VIEW);
-        parameters.forwardVoidTo = request.getOptionalProperty(VOID);
-        parameters.forwardErrorTo = request.getOptionalProperty(ERROR);
-        parameters.cancelTo = request.getOptionalProperty(CANCEL_TO); 
-        parameters.showIcon = request.isRequested(SHOW_ICON, showIconByDefault());
-        parameters.buttonTitle = request.getOptionalProperty(BUTTON_TITLE);
-        parameters.formTitle = request.getOptionalProperty(FORM_TITLE);
-        parameters.labelDelimiter = request.getOptionalProperty(LABEL_DELIMITER, ":");
-        parameters.formId = request.getOptionalProperty(FORM_ID, request.nextFormId());
-        parameters.resultName = request.getOptionalProperty(RESULT_NAME);
-        parameters.resultOverride = request.getOptionalProperty(RESULT_OVERRIDE);
-        parameters.scope = request.getOptionalProperty(SCOPE);
-        parameters.className = request.getOptionalProperty(CLASS, "action full");
-        parameters.showMessage = request.isRequested(SHOW_MESSAGE, false);
-        parameters.completionMessage = request.getOptionalProperty(MESSAGE);
-        parameters.id = request.getOptionalProperty(ID, parameters.methodName);
-        createForm(request, parameters);
+        parameters.objectId = tagProcessor.getOptionalProperty(OBJECT);
+        parameters.methodName = tagProcessor.getRequiredProperty(METHOD);
+        parameters.forwardResultTo = tagProcessor.getOptionalProperty(VIEW);
+        parameters.forwardVoidTo = tagProcessor.getOptionalProperty(VOID);
+        parameters.forwardErrorTo = tagProcessor.getOptionalProperty(ERROR);
+        parameters.cancelTo = tagProcessor.getOptionalProperty(CANCEL_TO); 
+        parameters.showIcon = tagProcessor.isRequested(SHOW_ICON, showIconByDefault());
+        parameters.buttonTitle = tagProcessor.getOptionalProperty(BUTTON_TITLE);
+        parameters.formTitle = tagProcessor.getOptionalProperty(FORM_TITLE);
+        parameters.labelDelimiter = tagProcessor.getOptionalProperty(LABEL_DELIMITER, ":");
+        parameters.formId = tagProcessor.getOptionalProperty(FORM_ID, tagProcessor.nextFormId());
+        parameters.resultName = tagProcessor.getOptionalProperty(RESULT_NAME);
+        parameters.resultOverride = tagProcessor.getOptionalProperty(RESULT_OVERRIDE);
+        parameters.scope = tagProcessor.getOptionalProperty(SCOPE);
+        parameters.className = tagProcessor.getOptionalProperty(CLASS, "action full");
+        parameters.showMessage = tagProcessor.isRequested(SHOW_MESSAGE, false);
+        parameters.completionMessage = tagProcessor.getOptionalProperty(MESSAGE);
+        parameters.id = tagProcessor.getOptionalProperty(ID, parameters.methodName);
+        createForm(tagProcessor, parameters);
     }
 
-    public static void createForm(final Request request, final CreateFormParameter parameterObject) {
-        createForm(request, parameterObject, false);
+    public static void createForm(final TagProcessor tagProcessor, final CreateFormParameter parameterObject) {
+        createForm(tagProcessor, parameterObject, false);
     }
 
-    protected static void createForm(final Request request, final CreateFormParameter parameterObject, final boolean withoutProcessing) {
-        final RequestContext context = request.getContext();
+    protected static void createForm(final TagProcessor tagProcessor, final CreateFormParameter parameterObject, final boolean withoutProcessing) {
+        final Request context = tagProcessor.getContext();
         final ObjectAdapter object = MethodsUtils.findObject(context, parameterObject.objectId);
-        final String version = request.getContext().mapVersion(object);
+        final String version = tagProcessor.getContext().mapVersion(object);
         final ObjectAction action = MethodsUtils.findAction(object, parameterObject.methodName);
         // TODO how do we distinguish between overloaded methods?
 
@@ -89,17 +90,17 @@ public class ActionForm extends AbstractElementProcessor {
             final String notUsable = MethodsUtils.isUsable(object, action, where);
             if (notUsable != null) {
                 if (!withoutProcessing) {
-                    request.skipUntilClose();
+                    tagProcessor.skipUntilClose();
                 }
-                request.appendHtml("<div class=\"" + parameterObject.className + "-message\" >");
-                request.appendAsHtmlEncoded(notUsable);
-                request.appendHtml("</div>");
+                tagProcessor.appendHtml("<div class=\"" + parameterObject.className + "-message\" >");
+                tagProcessor.appendAsHtmlEncoded(notUsable);
+                tagProcessor.appendHtml("</div>");
                 return;
             }
         }
         if (!MethodsUtils.isVisibleAndUsable(object, action, where)) {
             if (!withoutProcessing) {
-                request.skipUntilClose();
+                tagProcessor.skipUntilClose();
             }
             return;
         }
@@ -113,7 +114,7 @@ public class ActionForm extends AbstractElementProcessor {
                 parameterObject.forwardResultTo == null ? null : new HiddenInputField("_" + VIEW, context.fullFilePath(parameterObject.forwardResultTo)), new HiddenInputField("_" + VOID, voidView), new HiddenInputField("_" + ERROR, errorView),
                 parameterObject.completionMessage == null ? null : new HiddenInputField("_" + MESSAGE, parameterObject.completionMessage), parameterObject.scope == null ? null : new HiddenInputField("_" + SCOPE, parameterObject.scope),
                 parameterObject.resultOverride == null ? null : new HiddenInputField("_" + RESULT_OVERRIDE, parameterObject.resultOverride), parameterObject.resultName == null ? null : new HiddenInputField("_" + RESULT_NAME, parameterObject.resultName),
-                parameterObject.resultName == null ? null : new HiddenInputField(RequestContext.RESULT, (String) request.getContext().getVariable(RequestContext.RESULT)) };
+                parameterObject.resultName == null ? null : new HiddenInputField(Names.RESULT, (String) tagProcessor.getContext().getVariable(Names.RESULT)) };
 
         // TODO when the block contains a selector tag it doesn't disable it if
         // the field cannot be edited!!!
@@ -125,9 +126,9 @@ public class ActionForm extends AbstractElementProcessor {
                 return param.isOptional();
             }
         };
-        request.setBlockContent(containedBlock);
+        tagProcessor.setBlockContent(containedBlock);
         if (!withoutProcessing) {
-            request.processUtilCloseTag();
+            tagProcessor.processUtilCloseTag();
         }
 
         final FormState entryState = (FormState) context.getVariable(ENTRY_FIELDS);
@@ -160,10 +161,10 @@ public class ActionForm extends AbstractElementProcessor {
             buttonTitle = "Ok";
         }
 
-        HtmlFormBuilder.createForm(request, ActionAction.ACTION + ".app", hiddenFields, formFields, parameterObject.className,
+        HtmlFormBuilder.createForm(tagProcessor, ActionAction.ACTION + ".app", hiddenFields, formFields, parameterObject.className,
                 parameterObject.id, formTitle, parameterObject.labelDelimiter, action.getDescription(), action.getHelp(), buttonTitle, errors, parameterObject.cancelTo);
 
-        request.popBlockContent();
+        tagProcessor.popBlockContent();
     }
 
     private static InputField[] createFields(final ObjectAction action, final ObjectAdapter object) {
@@ -175,7 +176,7 @@ public class ActionForm extends AbstractElementProcessor {
         return fields;
     }
 
-    private static void initializeFields(final RequestContext context, final ObjectAdapter object, final ObjectAction action, final InputField[] fields) {
+    private static void initializeFields(final Request context, final ObjectAdapter object, final ObjectAction action, final InputField[] fields) {
         final List<ObjectActionParameter> parameters = action.getParameters();
         for (int i = 0; i < fields.length; i++) {
             final InputField field = fields[i];
@@ -199,7 +200,7 @@ public class ActionForm extends AbstractElementProcessor {
      * 
      * @param showIcon
      */
-    private static void setDefaults(final RequestContext context, final ObjectAdapter object, final ObjectAction action, final InputField[] fields, final FormState entryState, final boolean showIcon) {
+    private static void setDefaults(final Request context, final ObjectAdapter object, final ObjectAction action, final InputField[] fields, final FormState entryState, final boolean showIcon) {
         final ObjectAdapter[] defaultValues = action.getDefaults(object);
         if (defaultValues == null) {
             return;
@@ -225,7 +226,7 @@ public class ActionForm extends AbstractElementProcessor {
         }
     }
 
-    private static void copyEntryState(final RequestContext context, final ObjectAdapter object, final ObjectAction action, final InputField[] fields, final FormState entryState) {
+    private static void copyEntryState(final Request context, final ObjectAdapter object, final ObjectAction action, final InputField[] fields, final FormState entryState) {
 
         for (final InputField field : fields) {
             final FieldEditState fieldState = entryState.getField(field.getName());
@@ -241,7 +242,7 @@ public class ActionForm extends AbstractElementProcessor {
         }
     }
 
-    private static void overrideWithHtml(final RequestContext context, final FormFieldBlock containedBlock, final InputField[] formFields) {
+    private static void overrideWithHtml(final Request context, final FormFieldBlock containedBlock, final InputField[] formFields) {
         for (int i = 0; i < formFields.length; i++) {
             final String id = ActionAction.parameterName(i);
             if (containedBlock.hasContent(id)) {

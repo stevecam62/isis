@@ -22,31 +22,31 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.value;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.ObjectSpecification;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Type extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final RequestContext context = request.getContext();
-        final String showPlural = request.getOptionalProperty(PLURAL);
-        final String id = request.getOptionalProperty(OBJECT);
-        final String objectId = id != null ? id : (String) context.getVariable(RequestContext.RESULT);
+    public void process(final TagProcessor tagProcessor) {
+        final Request context = tagProcessor.getContext();
+        final String showPlural = tagProcessor.getOptionalProperty(PLURAL);
+        final String id = tagProcessor.getOptionalProperty(OBJECT);
+        final String objectId = id != null ? id : (String) context.getVariable(RESULT);
 
         ObjectAdapter object = context.getMappedObjectOrResult(objectId);
-        final String field = request.getOptionalProperty(FIELD);
+        final String field = tagProcessor.getOptionalProperty(FIELD);
         if (field != null) {
             final ObjectAssociation objectField = object.getSpecification().getAssociation(field);
             object = objectField.get(object);
         }
-        request.appendDebug(" for " + object);
+        tagProcessor.appendDebug(" for " + object);
 
         final ObjectSpecification specification = object.getSpecification();
         final String name = showPlural != null ? specification.getPluralName() : specification.getSingularName();
 
-        request.appendAsHtmlEncoded(name);
+        tagProcessor.appendAsHtmlEncoded(name);
     }
 
     @Override

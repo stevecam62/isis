@@ -19,17 +19,17 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 
 public class When extends AbstractConditionalBlock {
 
     @Override
-    protected void processTags(final boolean isSet, final Request request) {
+    protected void processTags(final boolean isSet, final TagProcessor tagProcessor) {
         if (isSet) {
-            request.processUtilCloseTag();
+            tagProcessor.processUtilCloseTag();
         } else {
-            request.appendDebug("    skipping segment");
-            request.skipUntilClose();
+            tagProcessor.appendDebug("    skipping segment");
+            tagProcessor.skipUntilClose();
         }
     }
 

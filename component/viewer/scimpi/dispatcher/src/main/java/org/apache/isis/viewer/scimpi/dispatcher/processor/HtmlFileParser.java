@@ -33,13 +33,8 @@ import org.htmlparser.lexer.Page;
 import org.htmlparser.nodes.TagNode;
 import org.htmlparser.util.ParserException;
 
-import org.apache.isis.viewer.scimpi.dispatcher.ElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.action.Attributes;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.view.HtmlSnippet;
-import org.apache.isis.viewer.scimpi.dispatcher.view.Snippet;
-import org.apache.isis.viewer.scimpi.dispatcher.view.SwfTag;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
 
 public class HtmlFileParser {
     private static final Logger LOG = Logger.getLogger(HtmlFileParser.class);
@@ -49,14 +44,14 @@ public class HtmlFileParser {
         this.processors = processors;
     }
 
-    public Stack<Snippet> parseHtmlFile(final String filePath, final RequestContext context) {
+    public Stack<Snippet> parseHtmlFile(final String filePath, final Request context) {
         final Stack<Snippet> tagsBeforeContent = new Stack<Snippet>();
         final Stack<Snippet> tagsAfterContent = new Stack<Snippet>();
         parseHtmlFile("/", filePath, context, tagsBeforeContent, tagsAfterContent);
         return tagsBeforeContent;
     }
 
-    public void parseHtmlFile(final String parentPath, final String filePath, final RequestContext context, final Stack<Snippet> allTags, final Stack<Snippet> tagsForPreviousTemplate) {
+    public void parseHtmlFile(final String parentPath, final String filePath, final Request context, final Stack<Snippet> allTags, final Stack<Snippet> tagsForPreviousTemplate) {
         LOG.debug("parent/file: " + parentPath + " & " + filePath);
         final File directory = filePath.startsWith("/") ? new File(".") : new File(parentPath);
         final File loadFile = new File(directory.getParentFile(), filePath);

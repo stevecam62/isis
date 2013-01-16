@@ -19,10 +19,10 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request.RepeatMarker;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor.RepeatMarker;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class BlockDefine extends AbstractElementProcessor {
 
@@ -32,11 +32,11 @@ public class BlockDefine extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final Request request) {
-        final String name = request.getOptionalProperty(NAME, "unamed");
-        final RepeatMarker start = request.createMarker();
-        request.skipUntilClose();
-        request.getContext().addVariable("_block-" + name, start, Scope.REQUEST);
+    public void process(final TagProcessor tagProcessor) {
+        final String name = tagProcessor.getOptionalProperty(NAME, "unamed");
+        final RepeatMarker start = tagProcessor.createMarker();
+        tagProcessor.skipUntilClose();
+        tagProcessor.getContext().addVariable("_block-" + name, start, Scope.REQUEST);
     }
 
 }

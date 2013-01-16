@@ -24,20 +24,20 @@ import java.util.List;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
 import org.apache.isis.core.metamodel.spec.feature.ObjectActionParameter;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class ParameterName extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String objectId = request.getOptionalProperty(OBJECT);
-        final String methodName = request.getRequiredProperty(METHOD);
-        final String field = request.getOptionalProperty(PARAMETER_NUMBER);
+    public void process(final TagProcessor tagProcessor) {
+        final String objectId = tagProcessor.getOptionalProperty(OBJECT);
+        final String methodName = tagProcessor.getRequiredProperty(METHOD);
+        final String field = tagProcessor.getOptionalProperty(PARAMETER_NUMBER);
 
-        final ObjectAdapter object = MethodsUtils.findObject(request.getContext(), objectId);
+        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), objectId);
         final ObjectAction action = MethodsUtils.findAction(object, methodName);
         final List<ObjectActionParameter> parameters = action.getParameters();
 
@@ -51,7 +51,7 @@ public class ParameterName extends AbstractElementProcessor {
             throw new ScimpiException("Parameter numbers should be between 1 and " + parameters.size() + ": " + index);
         }
 
-        request.appendAsHtmlEncoded(parameters.get(index).getName());
+        tagProcessor.appendAsHtmlEncoded(parameters.get(index).getName());
     }
 
     @Override

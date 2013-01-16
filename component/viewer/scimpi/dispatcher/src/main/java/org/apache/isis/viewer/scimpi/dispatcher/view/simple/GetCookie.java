@@ -19,17 +19,17 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class GetCookie extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String name = request.getRequiredProperty("name");
-        final String cookie = request.getContext().getCookie(name);
+    public void process(final TagProcessor tagProcessor) {
+        final String name = tagProcessor.getRequiredProperty("name");
+        final String cookie = tagProcessor.getContext().getCookie(name);
 
-        request.appendHtml(cookie);
+        tagProcessor.appendHtml(cookie);
     }
 
     @Override

@@ -19,19 +19,19 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Mark extends AbstractElementProcessor {
 
     // TODO the return points should be pushed on to a stack so that there is
     // traceable history.
     @Override
-    public void process(final Request request) {
+    public void process(final TagProcessor tagProcessor) {
         // String name = request.getOptionalProperty(NAME);
-        final RequestContext context = request.getContext();
+        final Request context = tagProcessor.getContext();
         context.addVariable("_return-to", context.getUri(), Scope.SESSION);
     }
 

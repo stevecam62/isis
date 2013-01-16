@@ -28,9 +28,9 @@ import org.apache.isis.core.metamodel.spec.ObjectSpecification;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
 import org.apache.isis.core.metamodel.spec.feature.ObjectActionParameter;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.BlockContent;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.BlockContent;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 
 public class ActionContent implements BlockContent {
     private final ObjectAction action;
@@ -55,7 +55,7 @@ public class ActionContent implements BlockContent {
         parameters[index] = value;
     }
 
-    public ObjectAdapter[] getParameters(final Request request) {
+    public ObjectAdapter[] getParameters(final TagProcessor tagProcessor) {
         final ObjectAdapter[] params = new ObjectAdapter[parameters.length];
         final List<ObjectActionParameter> pars = action.getParameters();
         for (int i = 0; i < parameters.length; i++) {
@@ -65,7 +65,7 @@ public class ActionContent implements BlockContent {
                 Localization localization = IsisContext.getLocalization(); 
                 params[i] = facet.parseTextEntry(null, parameters[i], localization);            
             } else {
-                params[i] = request.getContext().getMappedObject(parameters[i]);
+                params[i] = tagProcessor.getContext().getMappedObject(parameters[i]);
             }
         }
         return params;

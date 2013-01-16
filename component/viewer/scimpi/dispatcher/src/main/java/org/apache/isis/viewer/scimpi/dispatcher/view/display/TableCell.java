@@ -23,11 +23,12 @@ import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class TableCell extends AbstractElementProcessor {
 
@@ -39,51 +40,51 @@ public class TableCell extends AbstractElementProcessor {
     private final Where where = Where.ALL_TABLES;
 
     @Override
-    public void process(final Request request) {
-        final TableBlock tableBlock = (TableBlock) request.getBlockContent();
-        final String id = request.getOptionalProperty(OBJECT);
-        final String fieldName = request.getRequiredProperty(FIELD);
-        final String linkView = request.getOptionalProperty(LINK_VIEW);
-        String className = request.getOptionalProperty(CLASS);
+    public void process(final TagProcessor tagProcessor) {
+        final TableBlock tableBlock = (TableBlock) tagProcessor.getBlockContent();
+        final String id = tagProcessor.getOptionalProperty(OBJECT);
+        final String fieldName = tagProcessor.getRequiredProperty(FIELD);
+        final String linkView = tagProcessor.getOptionalProperty(LINK_VIEW);
+        String className = tagProcessor.getOptionalProperty(CLASS);
         className = className == null ? "" : " class=\"" + className + "\"";
-        RequestContext context = request.getContext();
+        Request context = tagProcessor.getContext();
         final ObjectAdapter object = context.getMappedObjectOrVariable(id, tableBlock.getElementName());
         final ObjectAssociation field = object.getSpecification().getAssociation(fieldName);
         if (field == null) {
             throw new ScimpiException("No field " + fieldName + " in " + object.getSpecification().getFullIdentifier());
         }
-        request.appendHtml("<td" + className + ">");
+        tagProcessor.appendHtml("<td" + className + ">");
         if (field.isVisible(IsisContext.getAuthenticationSession(), object, where).isAllowed()) {
             final ObjectAdapter fieldReference = field.get(object);
             final String source = fieldReference == null ? "" : context.mapObject(fieldReference, Scope.REQUEST);
-            final String name = request.getOptionalProperty(RESULT_NAME, fieldName);
-            context.addVariable(name, Request.getEncoder().encoder(source), Scope.REQUEST);
+            final String name = tagProcessor.getOptionalProperty(RESULT_NAME, fieldName);
+            context.addVariable(name, TagProcessor.getEncoder().encoder(source), Scope.REQUEST);
 
             if (linkView != null) {
                 final String linkId = context.mapObject(object, Scope.REQUEST);
-                final String linkName = request.getOptionalProperty(LINK_NAME, RequestContext.RESULT);
-                final String linkObject = request.getOptionalProperty(LINK_OBJECT, linkId);
-                request.appendHtml("<a href=\"" + linkView + "?" + linkName + "=" + linkObject + context.encodedInteractionParameters() + "\">");
+                final String linkName = tagProcessor.getOptionalProperty(LINK_NAME, Names.RESULT);
+                final String linkObject = tagProcessor.getOptionalProperty(LINK_OBJECT, linkId);
+                tagProcessor.appendHtml("<a href=\"" + linkView + "?" + linkName + "=" + linkObject + context.encodedInteractionParameters() + "\">");
             } else if(tableBlock.getlinkView() != null) {
                 String linkObjectInVariable = tableBlock.getElementName();
                 final String linkId = (String) context.getVariable(linkObjectInVariable);
-                request.appendHtml("<a href=\"" + tableBlock.getlinkView() + "?" + tableBlock.getlinkName() + "=" + linkId + context.encodedInteractionParameters() + "\">");                
+                tagProcessor.appendHtml("<a href=\"" + tableBlock.getlinkView() + "?" + tableBlock.getlinkName() + "=" + linkId + context.encodedInteractionParameters() + "\">");                
             }
-            request.pushNewBuffer();
-            request.processUtilCloseTag();
-            final String buffer = request.popBuffer();
+            tagProcessor.pushNewBuffer();
+            tagProcessor.processUtilCloseTag();
+            final String buffer = tagProcessor.popBuffer();
             if (buffer.trim().length() == 0) {
-                request.appendAsHtmlEncoded(fieldReference == null ? "" : fieldReference.titleString());
+                tagProcessor.appendAsHtmlEncoded(fieldReference == null ? "" : fieldReference.titleString());
             } else {
-                request.appendHtml(buffer);
+                tagProcessor.appendHtml(buffer);
             }
             if (linkView != null) {
-                request.appendHtml("</a>");
+                tagProcessor.appendHtml("</a>");
             }
         } else {
-            request.skipUntilClose();
+            tagProcessor.skipUntilClose();
         }
-        request.appendHtml("</td>");
+        tagProcessor.appendHtml("</td>");
     }
 
     @Override

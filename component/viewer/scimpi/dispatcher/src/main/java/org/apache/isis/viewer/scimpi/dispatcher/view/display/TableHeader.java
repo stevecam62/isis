@@ -19,8 +19,8 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.display;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class TableHeader extends AbstractElementProcessor {
 
@@ -30,10 +30,10 @@ public class TableHeader extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final Request request) {
-        request.appendHtml("<thead><tr>");
-        request.processUtilCloseTag();
-        request.appendHtml("</tr></thead>");
+    public void process(final TagProcessor tagProcessor) {
+        tagProcessor.appendHtml("<thead><tr>");
+        tagProcessor.processUtilCloseTag();
+        tagProcessor.appendHtml("</tr></thead>");
     }
 
 }

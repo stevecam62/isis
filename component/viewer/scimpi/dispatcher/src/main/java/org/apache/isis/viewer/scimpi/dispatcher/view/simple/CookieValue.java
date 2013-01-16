@@ -19,24 +19,24 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class CookieValue extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        String name = request.getRequiredProperty(NAME);
-        String resultName = request.getOptionalProperty(RESULT_NAME, name);
-        final String scopeName = request.getOptionalProperty(SCOPE);
-        final Scope scope = RequestContext.scope(scopeName, Scope.REQUEST);
+    public void process(final TagProcessor tagProcessor) {
+        String name = tagProcessor.getRequiredProperty(NAME);
+        String resultName = tagProcessor.getOptionalProperty(RESULT_NAME, name);
+        final String scopeName = tagProcessor.getOptionalProperty(SCOPE);
+        final Scope scope = Request.scope(scopeName, Scope.REQUEST);
         
-        String cookieString = request.getContext().getCookie(name);
+        String cookieString = tagProcessor.getContext().getCookie(name);
         
-        request.appendDebug("    " + resultName + " (" + scope + ") set to " + cookieString + " from cookie " + name);
-        request.getContext().addVariable(resultName, cookieString, scope);
+        tagProcessor.appendDebug("    " + resultName + " (" + scope + ") set to " + cookieString + " from cookie " + name);
+        tagProcessor.getContext().addVariable(resultName, cookieString, scope);
     }
 
     @Override

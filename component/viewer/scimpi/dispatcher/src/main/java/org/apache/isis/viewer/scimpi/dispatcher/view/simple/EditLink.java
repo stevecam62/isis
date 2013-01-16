@@ -30,8 +30,8 @@ import org.apache.isis.core.metamodel.spec.ObjectSpecification;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociationFilters;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 
 public class EditLink extends AbstractLink {
 
@@ -43,7 +43,7 @@ public class EditLink extends AbstractLink {
     private final Where where = Where.ANYWHERE;
 
     @Override
-    protected boolean valid(final Request request, final ObjectAdapter adapter) {
+    protected boolean valid(final TagProcessor tagProcessor, final ObjectAdapter adapter) {
         final ObjectSpecification specification = adapter.getSpecification();
         final AuthenticationSession session = IsisContext.getAuthenticationSession();
         final List<ObjectAssociation> visibleFields = specification.getAssociations(ObjectAssociationFilters.dynamicallyVisible(session, adapter, where));
@@ -60,7 +60,7 @@ public class EditLink extends AbstractLink {
 
     @Override
     protected String defaultView() {
-        return Dispatcher.GENERIC + Dispatcher.EDIT + "." + Dispatcher.EXTENSION;
+        return Names.GENERIC + Names.EDIT + "." + Names.EXTENSION;
     }
 
     @Override

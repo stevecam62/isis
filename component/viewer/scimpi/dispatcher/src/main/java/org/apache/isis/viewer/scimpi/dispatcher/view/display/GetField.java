@@ -30,12 +30,12 @@ import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.progmodel.facets.value.date.DateValueFacet;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class GetField extends AbstractElementProcessor {
 
@@ -47,10 +47,10 @@ public class GetField extends AbstractElementProcessor {
     private final Where where = Where.ANYWHERE;
 
     @Override
-    public void process(final Request request) {
-        final String id = request.getOptionalProperty(OBJECT);
-        final String fieldName = request.getRequiredProperty(FIELD);
-        final ObjectAdapter object = request.getContext().getMappedObjectOrResult(id);
+    public void process(final TagProcessor tagProcessor) {
+        final String id = tagProcessor.getOptionalProperty(OBJECT);
+        final String fieldName = tagProcessor.getRequiredProperty(FIELD);
+        final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
         if (object == null) {
             throw new ScimpiException("No object to get field for: " + fieldName + " - " + id);
         }
@@ -63,35 +63,35 @@ public class GetField extends AbstractElementProcessor {
             throw new ForbiddenException(field, ForbiddenException.VISIBLE);
         }
 
-        String pattern = request.getOptionalProperty("decimal-format");
+        String pattern = tagProcessor.getOptionalProperty("decimal-format");
         Format format = null;
         if (pattern != null) {
             format = new DecimalFormat(pattern);
         }
-        pattern = request.getOptionalProperty("date-format");
+        pattern = tagProcessor.getOptionalProperty("date-format");
         if (pattern != null) {
             format = new SimpleDateFormat(pattern);
         }
 
-        final String name = request.getOptionalProperty(RESULT_NAME, fieldName);
-        final String scopeName = request.getOptionalProperty(SCOPE);
-        final Scope scope = RequestContext.scope(scopeName, Scope.REQUEST);
+        final String name = tagProcessor.getOptionalProperty(RESULT_NAME, fieldName);
+        final String scopeName = tagProcessor.getOptionalProperty(SCOPE);
+        final Scope scope = Request.scope(scopeName, Scope.REQUEST);
 
-        process(request, object, field, format, name, scope);
+        process(tagProcessor, object, field, format, name, scope);
     }
 
-    protected void process(final Request request, final ObjectAdapter object, final ObjectAssociation field, final Format format, final String name, final Scope scope) {
+    protected void process(final TagProcessor tagProcessor, final ObjectAdapter object, final ObjectAssociation field, final Format format, final String name, final Scope scope) {
         final ObjectAdapter fieldReference = field.get(object);
         if (format != null && fieldReference.isValue()) {
             final DateValueFacet facet = fieldReference.getSpecification().getFacet(DateValueFacet.class);
             final Date date = facet.dateValue(fieldReference);
             final String value = format.format(date);
-            request.appendDebug("    " + object + " -> " + value);
-            request.getContext().addVariable(name, Request.getEncoder().encoder(value), scope);
+            tagProcessor.appendDebug("    " + object + " -> " + value);
+            tagProcessor.getContext().addVariable(name, TagProcessor.getEncoder().encoder(value), scope);
         } else {
-            final String source = fieldReference == null ? "" : request.getContext().mapObject(fieldReference, scope);
-            request.appendDebug("    " + object + " -> " + source);
-            request.getContext().addVariable(name, source, scope);
+            final String source = fieldReference == null ? "" : tagProcessor.getContext().mapObject(fieldReference, scope);
+            tagProcessor.appendDebug("    " + object + " -> " + source);
+            tagProcessor.getContext().addVariable(name, source, scope);
         }
     }
 

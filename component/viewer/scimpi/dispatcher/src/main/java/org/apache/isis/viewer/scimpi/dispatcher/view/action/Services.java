@@ -24,35 +24,35 @@ import java.util.List;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.core.runtime.system.persistence.PersistenceSession;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.field.InclusionList;
 
 public class Services extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final boolean showForms = request.isRequested(FORMS, false);
-        final String view = request.getOptionalProperty(VIEW, "_generic_action." + Dispatcher.EXTENSION);
-        final String cancelTo = request.getOptionalProperty(CANCEL_TO);
+    public void process(final TagProcessor tagProcessor) {
+        final boolean showForms = tagProcessor.isRequested(FORMS, false);
+        final String view = tagProcessor.getOptionalProperty(VIEW, "_generic_action." + Names.EXTENSION);
+        final String cancelTo = tagProcessor.getOptionalProperty(CANCEL_TO);
 
         final InclusionList inclusionList = new InclusionList();
-        request.setBlockContent(inclusionList);
-        request.processUtilCloseTag();
+        tagProcessor.setBlockContent(inclusionList);
+        tagProcessor.processUtilCloseTag();
 
         final List<ObjectAdapter> serviceAdapters = getPersistenceSession().getServices();
         for (final ObjectAdapter adapter : serviceAdapters) {
-            final String serviceId = request.getContext().mapObject(adapter, Scope.REQUEST);
-            request.appendHtml("<div class=\"actions\">");
-            request.appendHtml("<h3>");
-            request.appendAsHtmlEncoded(adapter.titleString());
-            request.appendHtml("</h3>");
-            Methods.writeMethods(request, serviceId, adapter, showForms, inclusionList, view, cancelTo);
-            request.appendHtml("</div>");
+            final String serviceId = tagProcessor.getContext().mapObject(adapter, Scope.REQUEST);
+            tagProcessor.appendHtml("<div class=\"actions\">");
+            tagProcessor.appendHtml("<h3>");
+            tagProcessor.appendAsHtmlEncoded(adapter.titleString());
+            tagProcessor.appendHtml("</h3>");
+            Methods.writeMethods(tagProcessor, serviceId, adapter, showForms, inclusionList, view, cancelTo);
+            tagProcessor.appendHtml("</div>");
         }
-        request.popBlockContent();
+        tagProcessor.popBlockContent();
     }
 
     @Override

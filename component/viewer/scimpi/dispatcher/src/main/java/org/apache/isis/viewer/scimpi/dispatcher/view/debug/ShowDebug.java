@@ -19,17 +19,17 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.debug;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class ShowDebug extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        if (request.getContext().isDebugDisabled()) {
-            request.skipUntilClose();
+    public void process(final TagProcessor tagProcessor) {
+        if (tagProcessor.getContext().isDebugDisabled()) {
+            tagProcessor.skipUntilClose();
         } else {
-            request.processUtilCloseTag();
+            tagProcessor.processUtilCloseTag();
         }
     }
 

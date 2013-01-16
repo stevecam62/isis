@@ -21,26 +21,27 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.runtime.persistence.ObjectNotFoundException;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class InitializeFromCookie extends AbstractElementProcessor {
     private static final String SEVEN_DAYS = Integer.toString(60 * 24 * 7);
 
     @Override
-    public void process(final Request request) {
-        final String name = request.getRequiredProperty(NAME);
+    public void process(final TagProcessor tagProcessor) {
+        final String name = tagProcessor.getRequiredProperty(NAME);
 
-        final RequestContext context = request.getContext();
+        final Request context = tagProcessor.getContext();
         if (context.getVariable(name) != null) {
-            request.skipUntilClose();
+            tagProcessor.skipUntilClose();
         } else {
-            final String scopeName = request.getOptionalProperty(SCOPE);
-            final Scope scope = RequestContext.scope(scopeName, Scope.SESSION);
+            final String scopeName = tagProcessor.getOptionalProperty(SCOPE);
+            final Scope scope = Request.scope(scopeName, Scope.SESSION);
 
-            final String cookieName = request.getOptionalProperty("cookie", name);
+            final String cookieName = tagProcessor.getOptionalProperty("cookie", name);
             final String cookieValue = context.getCookie(cookieName);
             boolean hasObject;
             if (cookieValue != null) {
@@ -55,14 +56,14 @@ public class InitializeFromCookie extends AbstractElementProcessor {
             }
 
             if (hasObject) {
-                request.skipUntilClose();
+                tagProcessor.skipUntilClose();
                 context.addVariable(name, cookieValue, scope);
             } else {
-                final String expiresString = request.getOptionalProperty("expires", SEVEN_DAYS);
-                request.pushNewBuffer();
-                request.processUtilCloseTag();
-                request.popBuffer();
-                final String id = (String) context.getVariable(RequestContext.RESULT);
+                final String expiresString = tagProcessor.getOptionalProperty("expires", SEVEN_DAYS);
+                tagProcessor.pushNewBuffer();
+                tagProcessor.processUtilCloseTag();
+                tagProcessor.popBuffer();
+                final String id = (String) context.getVariable(Names.RESULT);
                 final ObjectAdapter variable = context.getMappedObject(id);
                 if (variable != null) {
                     context.addCookie(cookieName, id, Integer.valueOf(expiresString));

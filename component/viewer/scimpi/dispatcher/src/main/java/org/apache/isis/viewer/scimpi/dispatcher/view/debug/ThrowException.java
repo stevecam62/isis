@@ -20,18 +20,18 @@
 package org.apache.isis.viewer.scimpi.dispatcher.view.debug;
 
 import org.apache.isis.core.commons.exceptions.IsisException;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class ThrowException extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        if (request.getContext().isDebugDisabled()) {
+    public void process(final TagProcessor tagProcessor) {
+        if (tagProcessor.getContext().isDebugDisabled()) {
             return;
         }
 
-        final String message = request.getOptionalProperty("message", "Exception throw for testing purposes");
+        final String message = tagProcessor.getOptionalProperty("message", "Exception throw for testing purposes");
         throw new IsisException(message);
     }
 

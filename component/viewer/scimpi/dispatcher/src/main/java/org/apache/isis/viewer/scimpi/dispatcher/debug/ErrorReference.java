@@ -19,8 +19,8 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.debug;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 
 public class ErrorReference extends AbstractElementProcessor {
@@ -29,7 +29,7 @@ public class ErrorReference extends AbstractElementProcessor {
         return "error-reference";
     }
 
-    public void process(final Request request) {
-        request.appendAsHtmlEncoded(request.getContext().getErrorReference());
+    public void process(final TagProcessor tagProcessor) {
+        tagProcessor.appendAsHtmlEncoded(tagProcessor.getContext().getErrorReference());
     }
 }

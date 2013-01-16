@@ -37,14 +37,14 @@ import javax.servlet.http.HttpSession;
 import org.apache.isis.core.commons.debug.DebugBuilder;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.ObjectSpecification;
+import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.DispatchException;
-import org.apache.isis.viewer.scimpi.dispatcher.ErrorCollator;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.ScimpiNotFoundException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.debug.DebugUsers;
+import org.apache.isis.viewer.scimpi.dispatcher.context.ErrorCollator;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.security.DebugUsers;
 
-public class ServletRequestContext extends RequestContext {
+public class ServletRequestContext extends Request {
     private HttpServletRequest request;
     private HttpServletResponse response;
     private ServletContext servletContext;

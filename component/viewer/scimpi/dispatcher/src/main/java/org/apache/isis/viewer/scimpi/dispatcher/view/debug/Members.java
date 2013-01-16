@@ -30,10 +30,10 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectActionContainer.Contrib
 import org.apache.isis.core.metamodel.spec.feature.ObjectActionParameter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Members extends AbstractElementProcessor {
 
@@ -50,16 +50,16 @@ public class Members extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final Request request) {
-        if (request.getContext().isDebugDisabled()) {
+    public void process(final TagProcessor tagProcessor) {
+        if (tagProcessor.getContext().isDebugDisabled()) {
             return;
         }
 
-        final String id = request.getOptionalProperty(OBJECT);
-        final String fieldName = request.getOptionalProperty(FIELD);
-        request.appendHtml("<pre class=\"debug\">");
+        final String id = tagProcessor.getOptionalProperty(OBJECT);
+        final String fieldName = tagProcessor.getOptionalProperty(FIELD);
+        tagProcessor.appendHtml("<pre class=\"debug\">");
         try {
-            ObjectAdapter object = request.getContext().getMappedObjectOrResult(id);
+            ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
             ObjectAssociation field = null;
             if (fieldName != null) {
                 field = object.getSpecification().getAssociation(fieldName);
@@ -68,40 +68,40 @@ public class Members extends AbstractElementProcessor {
                 }
                 object = field.get(object);
             }
-            request.processUtilCloseTag();
+            tagProcessor.processUtilCloseTag();
 
             final ObjectSpecification specification = field == null ? object.getSpecification() : field.getSpecification();
 
-            request.appendHtml(specification.getSingularName() + " (" + specification.getFullIdentifier() + ") \n");
+            tagProcessor.appendHtml(specification.getSingularName() + " (" + specification.getFullIdentifier() + ") \n");
             final List<ObjectAssociation> fields = specification.getAssociations();
             for (final ObjectAssociation fld : fields) {
                 if (!fld.isAlwaysHidden()) {
-                    request.appendHtml("   " + fld.getId() + " - '" + fld.getName() + "' -> " + fld.getSpecification().getSingularName() + (fld.isOneToManyAssociation() ? " (collection of)" : "") + "\n");
+                    tagProcessor.appendHtml("   " + fld.getId() + " - '" + fld.getName() + "' -> " + fld.getSpecification().getSingularName() + (fld.isOneToManyAssociation() ? " (collection of)" : "") + "\n");
                 }
             }
-            request.appendHtml("   --------------\n");
+            tagProcessor.appendHtml("   --------------\n");
             final List<ObjectAction> actions = specification.getObjectActions(ActionType.USER, Contributed.INCLUDED);
             ;
             for (final ObjectAction action : actions) {
-                request.appendHtml("   " + action.getId() + " (");
+                tagProcessor.appendHtml("   " + action.getId() + " (");
                 boolean first = true;
                 for (final ObjectActionParameter parameter : action.getParameters()) {
                     if (!first) {
-                        request.appendHtml(", ");
+                        tagProcessor.appendHtml(", ");
                     }
-                    request.appendHtml(parameter.getSpecification().getSingularName());
+                    tagProcessor.appendHtml(parameter.getSpecification().getSingularName());
                     first = false;
                 }
-                request.appendHtml(")" + " - '" + action.getName() + "'");
+                tagProcessor.appendHtml(")" + " - '" + action.getName() + "'");
                 if (action.getSpecification() != null) {
-                    request.appendHtml(" -> " + action.getSpecification().getSingularName() + ")");
+                    tagProcessor.appendHtml(" -> " + action.getSpecification().getSingularName() + ")");
                 }
-                request.appendHtml("\n");
+                tagProcessor.appendHtml("\n");
             }
         } catch (final ScimpiException e) {
-            request.appendHtml("Debug failed: " + e.getMessage());
+            tagProcessor.appendHtml("Debug failed: " + e.getMessage());
         }
-        request.appendHtml("</pre>");
+        tagProcessor.appendHtml("</pre>");
     }
 
 }

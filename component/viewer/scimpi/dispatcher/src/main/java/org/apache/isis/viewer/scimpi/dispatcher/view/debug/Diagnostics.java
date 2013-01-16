@@ -22,54 +22,55 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.debug;
 import org.apache.isis.core.commons.authentication.AuthenticationSession;
 import org.apache.isis.core.commons.debug.DebugHtmlString;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Diagnostics extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        if (request.getContext().isDebugDisabled()) {
+    public void process(final TagProcessor tagProcessor) {
+        if (tagProcessor.getContext().isDebugDisabled()) {
             return;
         }
 
-        final String type = request.getOptionalProperty(TYPE, "page");
-        final boolean isForced = request.isRequested("force");
-        if (isForced || request.getContext().showDebugData()) {
-            request.appendHtml("<div class=\"debug\">");
+        final String type = tagProcessor.getOptionalProperty(TYPE, "page");
+        final boolean isForced = tagProcessor.isRequested("force");
+        if (isForced || tagProcessor.getContext().showDebugData()) {
+            tagProcessor.appendHtml("<div class=\"debug\">");
             if ("page".equals(type)) {
-                request.appendHtml("<pre>");
-                final RequestContext context = request.getContext();
-                request.appendHtml("URI:  " + context.getUri());
-                request.appendHtml("\n");
-                request.appendHtml("File: " + context.fullFilePath(context.getResourceFile()));
-                final String result = (String) request.getContext().getVariable(RequestContext.RESULT);
+                tagProcessor.appendHtml("<pre>");
+                final Request context = tagProcessor.getContext();
+                tagProcessor.appendHtml("URI:  " + context.getUri());
+                tagProcessor.appendHtml("\n");
+                tagProcessor.appendHtml("File: " + context.fullFilePath(context.getResourceFile()));
+                final String result = (String) tagProcessor.getContext().getVariable(Names.RESULT);
                 if (result != null) {
-                    request.appendHtml("\n");
-                    request.appendHtml("Object: " + result);
+                    tagProcessor.appendHtml("\n");
+                    tagProcessor.appendHtml("Object: " + result);
                 }
-                request.appendHtml("</pre>");
+                tagProcessor.appendHtml("</pre>");
             } else if ("session".equals(type)) {
-                request.appendHtml("<pre>");
+                tagProcessor.appendHtml("<pre>");
                 final AuthenticationSession session = IsisContext.getAuthenticationSession();
-                request.appendHtml("Session:  " + session.getUserName() + " " + session.getRoles());
-                request.appendHtml("</pre>");
+                tagProcessor.appendHtml("Session:  " + session.getUserName() + " " + session.getRoles());
+                tagProcessor.appendHtml("</pre>");
             } else if ("variables".equals(type)) {
-                final RequestContext context = request.getContext();
+                final Request context = tagProcessor.getContext();
                 final DebugHtmlString debug = new DebugHtmlString();
                 debug.appendln("", "");
                 context.append(debug, "variables");
                 debug.close();
-                request.appendHtml(debug.toString());
+                tagProcessor.appendHtml(debug.toString());
             } else if ("processing".equals(type)) {
-                request.appendHtml("<pre>");
-                request.appendHtml(request.getContext().getDebugTrace());
-                request.appendHtml("</pre>");
+                tagProcessor.appendHtml("<pre>");
+                tagProcessor.appendHtml(tagProcessor.getContext().getDebugTrace());
+                tagProcessor.appendHtml("</pre>");
             } else {
-                request.appendHtml("<i>No such type " + type + "</i>");
+                tagProcessor.appendHtml("<i>No such type " + type + "</i>");
             }
-            request.appendHtml("</div>");
+            tagProcessor.appendHtml("</div>");
         }
     }
 

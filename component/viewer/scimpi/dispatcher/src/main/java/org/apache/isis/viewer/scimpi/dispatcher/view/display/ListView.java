@@ -24,10 +24,11 @@ import java.util.Iterator;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.facets.collections.modify.CollectionFacet;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractObjectProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractObjectProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.field.LinkedObject;
 
 public class ListView extends AbstractObjectProcessor {
@@ -38,24 +39,24 @@ public class ListView extends AbstractObjectProcessor {
     }
 
     @Override
-    public void process(final Request request, final ObjectAdapter object) {
-        final String linkRowView = request.getOptionalProperty(LINK_VIEW);
-        final String linkObjectName = request.getOptionalProperty(ELEMENT_NAME, RequestContext.RESULT);
-        final String linkObjectScope = request.getOptionalProperty(SCOPE, Scope.INTERACTION.toString());
+    public void process(final TagProcessor tagProcessor, final ObjectAdapter object) {
+        final String linkRowView = tagProcessor.getOptionalProperty(LINK_VIEW);
+        final String linkObjectName = tagProcessor.getOptionalProperty(ELEMENT_NAME, Names.RESULT);
+        final String linkObjectScope = tagProcessor.getOptionalProperty(SCOPE, Scope.INTERACTION.toString());
         LinkedObject linkedRow = null;
         if (linkRowView != null) {
-            linkedRow = new LinkedObject(linkObjectName, linkObjectScope, request.getContext().fullUriPath(linkRowView));
+            linkedRow = new LinkedObject(linkObjectName, linkObjectScope, tagProcessor.getContext().fullUriPath(linkRowView));
         }
-        final String bulletType = request.getOptionalProperty("type");
-        write(request, object, linkedRow, bulletType);
+        final String bulletType = tagProcessor.getOptionalProperty("type");
+        write(tagProcessor, object, linkedRow, bulletType);
     }
 
-    public static void write(final Request request, final ObjectAdapter collection, final LinkedObject linkRow, final String bulletType) {
+    public static void write(final TagProcessor tagProcessor, final ObjectAdapter collection, final LinkedObject linkRow, final String bulletType) {
 
         if (bulletType == null) {
-            request.appendHtml("<ol>");
+            tagProcessor.appendHtml("<ol>");
         } else {
-            request.appendHtml("<ul type=\"" + bulletType + "\">");
+            tagProcessor.appendHtml("<ul type=\"" + bulletType + "\">");
         }
 
         final CollectionFacet facet = collection.getSpecification().getFacet(CollectionFacet.class);
@@ -63,23 +64,23 @@ public class ListView extends AbstractObjectProcessor {
         while (iterator.hasNext()) {
             final ObjectAdapter element = iterator.next();
 
-            request.appendHtml("<li>");
+            tagProcessor.appendHtml("<li>");
             if (linkRow != null) {
-                final Scope scope = linkRow == null ? Scope.INTERACTION : RequestContext.scope(linkRow.getScope());
-                final String rowId = request.getContext().mapObject(element, scope);
-                request.appendHtml("<a class=\"item-select\" href=\"" + linkRow.getForwardView() + "?" + linkRow.getVariable() + "=" + rowId + "\">");
+                final Scope scope = linkRow == null ? Scope.INTERACTION : Request.scope(linkRow.getScope());
+                final String rowId = tagProcessor.getContext().mapObject(element, scope);
+                tagProcessor.appendHtml("<a class=\"item-select\" href=\"" + linkRow.getForwardView() + "?" + linkRow.getVariable() + "=" + rowId + "\">");
             }
-            request.appendAsHtmlEncoded(element.titleString());
+            tagProcessor.appendAsHtmlEncoded(element.titleString());
             if (linkRow != null) {
-                request.appendHtml("</a>");
+                tagProcessor.appendHtml("</a>");
             }
 
-            request.appendHtml("</li>\n");
+            tagProcessor.appendHtml("</li>\n");
         }
         if (bulletType == null) {
-            request.appendHtml("</ol>");
+            tagProcessor.appendHtml("</ol>");
         } else {
-            request.appendHtml("</ul>");
+            tagProcessor.appendHtml("</ul>");
         }
 
     }

@@ -39,12 +39,11 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
 import org.apache.isis.core.metamodel.spec.feature.ObjectActionParameter;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.core.runtime.system.transaction.MessageBroker;
-import org.apache.isis.viewer.scimpi.dispatcher.Action;
-import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.edit.FieldEditState;
-import org.apache.isis.viewer.scimpi.dispatcher.edit.FormState;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Action;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.structure.FieldEditState;
+import org.apache.isis.viewer.scimpi.dispatcher.structure.FormState;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
 
 public class ActionAction implements Action {
@@ -67,7 +66,7 @@ public class ActionAction implements Action {
      * REVIEW - this and EditAction are very similar - refactor out common code.
      */
     @Override
-    public void process(final RequestContext context) throws IOException {
+    public void process(final Request context) throws IOException {
         final String objectId = context.getParameter("_" + OBJECT);
         final String version = context.getParameter("_" + VERSION);
         final String formId = context.getParameter("_" + FORM_ID);
@@ -75,7 +74,7 @@ public class ActionAction implements Action {
         final String override = context.getParameter("_" + RESULT_OVERRIDE);
         String resultName = context.getParameter("_" + RESULT_NAME);
         final String message = context.getParameter("_" + MESSAGE);
-        resultName = resultName == null ? RequestContext.RESULT : resultName;
+        resultName = resultName == null ? RESULT : resultName;
 
         FormState entryState = null;
         try {
@@ -125,7 +124,7 @@ public class ActionAction implements Action {
                 }
                 final String error = entryState.getError();
                 final String view = context.getParameter("_" + ERROR);
-                context.setRequestPath(view, Dispatcher.ACTION);
+                context.setRequestPath(view, "_" + ACTION);
 
                 final MessageBroker messageBroker = getMessageBroker();
                 messageBroker.addWarning(error);
@@ -145,11 +144,11 @@ public class ActionAction implements Action {
             }
             final String error = entryState.getError();
             if (error != null) {
-                context.addVariable(RequestContext.ERROR, error, Scope.REQUEST);
+                context.addVariable("_" + ERROR, error, Scope.REQUEST);
             }
 
-            final String view = context.getParameter("_" + ERROR);
-            context.setRequestPath(view, Dispatcher.ACTION);
+            final String view = context.getParameter(ERROR_PARAM);
+            context.setRequestPath(view, "_" + ACTION);
 
         } catch (final RuntimeException e) {
             getMessageBroker().getMessages();
@@ -160,11 +159,11 @@ public class ActionAction implements Action {
         }
     }
 
-    private boolean invokeMethod(final RequestContext context, final String variable, final ObjectAdapter object, final ObjectAction action, final FormState entryState) {
+    private boolean invokeMethod(final Request context, final String variable, final ObjectAdapter object, final ObjectAction action, final FormState entryState) {
 
         final ObjectAdapter[] parameters = getParameters(action, entryState);
         final String scopeName = context.getParameter("_" + SCOPE);
-        final Scope scope = RequestContext.scope(scopeName, Scope.REQUEST);
+        final Scope scope = Request.scope(scopeName, Scope.REQUEST);
         return MethodsUtils.runMethod(context, action, object, parameters, variable, scope);
     }
 
@@ -177,7 +176,7 @@ public class ActionAction implements Action {
         return parameters;
     }
 
-    private FormState validateParameters(final RequestContext context, final ObjectAction action, final ObjectAdapter object) {
+    private FormState validateParameters(final Request context, final ObjectAction action, final ObjectAdapter object) {
         final FormState formState = new FormState();
         final List<ObjectActionParameter> parameters2 = action.getParameters();
         final int parameterCount = action.getParameterCount();

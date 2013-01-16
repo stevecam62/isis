@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +38,7 @@ import org.apache.isis.applib.Identifier;
 import org.apache.isis.core.commons.authentication.AuthenticationSession;
 import org.apache.isis.core.commons.config.ConfigurationConstants;
 import org.apache.isis.core.commons.debug.DebugBuilder;
+import org.apache.isis.core.commons.debug.Debuggable;
 import org.apache.isis.core.commons.exceptions.IsisException;
 import org.apache.isis.core.commons.factory.InstanceUtil;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
@@ -50,41 +50,55 @@ import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.core.runtime.system.persistence.PersistenceSession;
 import org.apache.isis.core.runtime.system.transaction.IsisTransactionManager;
 import org.apache.isis.core.runtime.userprofile.UserLocalization;
+import org.apache.isis.viewer.scimpi.DebugHtmlWriter;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.NotLoggedInException;
+import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.action.ActionAction;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Debug;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.debug.DebugAction;
-import org.apache.isis.viewer.scimpi.dispatcher.debug.DebugUserAction;
-import org.apache.isis.viewer.scimpi.dispatcher.debug.DebugUsers;
-import org.apache.isis.viewer.scimpi.dispatcher.debug.DebugHtmlWriter;
-import org.apache.isis.viewer.scimpi.dispatcher.debug.LogAction;
-import org.apache.isis.viewer.scimpi.dispatcher.edit.EditAction;
-import org.apache.isis.viewer.scimpi.dispatcher.edit.RemoveAction;
-import org.apache.isis.viewer.scimpi.dispatcher.logon.LogonAction;
-import org.apache.isis.viewer.scimpi.dispatcher.logon.LogoutAction;
+import org.apache.isis.viewer.scimpi.dispatcher.action.DebugAction;
+import org.apache.isis.viewer.scimpi.dispatcher.action.DebugUserAction;
+import org.apache.isis.viewer.scimpi.dispatcher.action.EditAction;
+import org.apache.isis.viewer.scimpi.dispatcher.action.LogAction;
+import org.apache.isis.viewer.scimpi.dispatcher.action.LogonAction;
+import org.apache.isis.viewer.scimpi.dispatcher.action.LogoutAction;
+import org.apache.isis.viewer.scimpi.dispatcher.action.RemoveAction;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Action;
+import org.apache.isis.viewer.scimpi.dispatcher.context.ErrorCollator;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Debug;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.ElementProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.Encoder;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.HtmlFileParser;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.ProcessorLookup;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.SimpleEncoder;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.Snippet;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessingException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
-import org.apache.isis.viewer.scimpi.dispatcher.view.Snippet;
+import org.apache.isis.viewer.scimpi.security.DebugUsers;
+import org.apache.isis.viewer.scimpi.security.UserManager;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 
-public class Dispatcher {
+public class Dispatcher implements Debuggable {
     private static final String SHOW_UNSHOWN_MESSAGES = ConfigurationConstants.ROOT + "scimpi.show-unshown-messages";
+    @Deprecated
     public static final String ACTION = "_action";
+    @Deprecated
     public static final String EDIT = "_edit";
+    @Deprecated
     public static final String REMOVE = "_remove";
+    @Deprecated
     public static final String GENERIC = "_generic";
+    @Deprecated
     public static final String EXTENSION = "shtml";
     private static final Logger LOG = Logger.getLogger(Dispatcher.class);
+    @Deprecated
     public static final String COMMAND_ROOT = ".app";
     private final Map<String, Action> actions = new HashMap<String, Action>();
     private final Map<String, String> parameters = new HashMap<String, String>();
@@ -93,37 +107,37 @@ public class Dispatcher {
     private final Encoder encoder = new SimpleEncoder();
     private boolean showUnshownMessages;
 
-    public void process(final RequestContext context, final String servletPath) {
+    public void process(final Request request, final Response response, final String servletPath) {
         LOG.debug("processing request " + servletPath);
-        final AuthenticationSession session = UserManager.startRequest(context);
-        LOG.debug("exsiting session: " + session);
+        final AuthenticationSession session = UserManager.startRequest(request.getSession());
+        LOG.debug("  using session: " + session);
         
-        String language = (String) context.getVariable("user-language");
+        String language = (String) request.getVariable("user-language");
         if (language != null) {
             Locale locale = Util.locale(language);
-            TimeZone timeZone = Util.timeZone((String) context.getVariable("user-time-zone"));
+            TimeZone timeZone = Util.timeZone((String) request.getVariable("user-time-zone"));
             IsisContext.getUserProfile().setLocalization(new UserLocalization(locale, timeZone));
          } 
         
         IsisContext.getPersistenceSession().getTransactionManager().startTransaction();
-        context.setRequestPath(servletPath);
-        context.startRequest();
+        request.setRequestPath(servletPath);
+        request.startRequest();
 
         try {
-            processActions(context, false, servletPath);
-            processTheView(context);
+            processActions(request, false, servletPath);
+            processTheView(request);
         } catch (final ScimpiNotFoundException e) {
-            if (context.isInternalRequest()) {
+            if (request.isInternalRequest()) {
                 LOG.error("invalid page request (from within application): " + e.getMessage());
                 ErrorCollator error = new ErrorCollator(); 
                 error.missingFile("Failed to find page " + servletPath + "."); 
-                show500ErrorPage(context, e, error);             
+                show500ErrorPage(request, e, error);             
             } else {
                 LOG.info("invalid page request (from outside application): " + e.getMessage());
-                show404ErrorPage(context, servletPath); 
+                show404ErrorPage(request, servletPath); 
             }
         } catch (final NotLoggedInException e) {
-            redirectToLoginPage(context); 
+            redirectToLoginPage(request); 
         } catch (final Throwable e) {
             ErrorCollator error = new ErrorCollator();
             final PersistenceSession checkSession = IsisContext.getPersistenceSession();
@@ -136,25 +150,25 @@ public class Dispatcher {
             final Throwable ex = e instanceof TagProcessingException ? e.getCause() : e;
             if (ex instanceof ForbiddenException) {
                 LOG.error("invalid access to " + servletPath, e);
-                show403ErrorPage(context, error, e, ex);
+                show403ErrorPage(request, error, e, ex);
             } else {
                 LOG.error("error procesing " + servletPath, e);
-                if (context.getErrorMessage() != null) {
-                    fallbackToSimpleErrorPage(context, e);
+                if (request.getErrorMessage() != null) {
+                    fallbackToSimpleErrorPage(request, e);
                 } else {
-                    show500ErrorPage(context, e, error);
+                    show500ErrorPage(request, e, error);
                 }
             }
         } finally {
             try {
-                UserManager.endRequest(context.getSession());
+                UserManager.endRequest(request.getSession());
             } catch (final Exception e1) {
                 LOG.error("endRequest call failed", e1);
             }
         }
     }
 
-    private void redirectToLoginPage(final RequestContext context) {
+    private void redirectToLoginPage(final Request context) {
         IsisContext.getMessageBroker().addWarning(
             "You are not currently logged in! Please log in so you can continue.");
         context.setRequestPath("/login.shtml");
@@ -165,13 +179,13 @@ public class Dispatcher {
         }
     }
 
-    private void show404ErrorPage(final RequestContext context, final String servletPath) {
+    private void show404ErrorPage(final Request context, final String servletPath) {
         ErrorCollator error = new ErrorCollator();
         error.missingFile("Failed to find page " + servletPath + ".");
         context.raiseError(404, error);
     }
 
-    private void show403ErrorPage(final RequestContext context, ErrorCollator error, final Throwable e, final Throwable ex) {
+    private void show403ErrorPage(final Request context, ErrorCollator error, final Throwable e, final Throwable ex) {
         DebugBuilder debug = error.getDebug();
         error.message(e);
         error.message(ex);
@@ -195,13 +209,13 @@ public class Dispatcher {
         context.raiseError(403, error);
     }
 
-    private void show500ErrorPage(final RequestContext context, final Throwable e, ErrorCollator error) {
+    private void show500ErrorPage(final Request context, final Throwable e, ErrorCollator error) {
         error.exception(e);
         error.compileError(context);
         context.raiseError(500, error);
     }
 
-    private void fallbackToSimpleErrorPage(final RequestContext context, final Throwable e) {
+    private void fallbackToSimpleErrorPage(final Request context, final Throwable e) {
         context.setContentType("text/html");
         final PrintWriter writer = context.getWriter();
         writer.write("<html><head><title>Error</title></head>");
@@ -213,7 +227,7 @@ public class Dispatcher {
         LOG.error("Error while processing error", e);
     }
 
-    protected void processTheView(final RequestContext context) throws IOException {
+    protected void processTheView(final Request context) throws IOException {
         IsisTransactionManager transactionManager = IsisContext.getPersistenceSession().getTransactionManager();
         if (transactionManager.getTransaction().getState().canFlush()) {
             transactionManager.flushTransaction();
@@ -239,7 +253,7 @@ public class Dispatcher {
         return parameters.get(name);
     }
 
-    private void processActions(final RequestContext context, final boolean userLoggedIn, final String actionName) throws IOException {
+    private void processActions(final Request context, final boolean userLoggedIn, final String actionName) throws IOException {
         if (actionName.endsWith(COMMAND_ROOT)) {
             final int pos = actionName.lastIndexOf('/');
             final Action action = actions.get(actionName.substring(pos, actionName.length() - COMMAND_ROOT.length()));
@@ -256,7 +270,7 @@ public class Dispatcher {
         }
     }
 
-    private void processView(final RequestContext context) throws IOException {
+    private void processView(final Request context) throws IOException {
         String file = context.getRequestedFile();
         if (file == null) {
             LOG.warn("No view specified to process");
@@ -274,10 +288,10 @@ public class Dispatcher {
 
         context.addVariable("title", "Untitled Page", Scope.REQUEST);
         final Stack<Snippet> tags = loadPageTemplate(context, fullPath);
-        final Request request = new Request(file, context, encoder, tags, processors);
-        request.appendDebug("processing " + fullPath);
+        final TagProcessor tagProcessor = new TagProcessor(file, context, encoder, tags, processors);
+        tagProcessor.appendDebug("processing " + fullPath);
         try {
-            request.processNextTag();
+            tagProcessor.processNextTag();
             noteIfMessagesHaveNotBeenDisplay(context);
             IsisContext.getUpdateNotifier().clear();
         } catch (final RuntimeException e) {
@@ -286,7 +300,7 @@ public class Dispatcher {
             IsisContext.getUpdateNotifier().clear();
             throw e;
         }
-        final String page = request.popBuffer();
+        final String page = tagProcessor.popBuffer();
         final PrintWriter writer = context.getWriter();
         writer.write(page);
         if (context.getDebug() == Debug.PAGE) {
@@ -295,7 +309,7 @@ public class Dispatcher {
         }
     }
 
-    public void noteIfMessagesHaveNotBeenDisplay(final RequestContext context) {
+    public void noteIfMessagesHaveNotBeenDisplay(final Request context) {
         final List<String> messages = IsisContext.getMessageBroker().getMessages();
         if (showUnshownMessages) {
             if (messages.size() > 0) {
@@ -316,43 +330,43 @@ public class Dispatcher {
         }
     }
 
-    private String determineFile(final RequestContext context, String file) {
+    private String determineFile(final Request context, String file) {
         final String fileName = file.trim();
-        if (fileName.startsWith(GENERIC)) {
-            final Object result = context.getVariable(RequestContext.RESULT);
+        if (fileName.startsWith(Names.GENERIC)) {
+            final Object result = context.getVariable(Names.RESULT);
             final ObjectAdapter mappedObject = MethodsUtils.findObject(context, (String) result);
             if (mappedObject == null) {
                 throw new ScimpiException("No object mapping for " + result);
             }
-            if (fileName.equals(GENERIC + "." + EXTENSION)) {
+            if (fileName.equals(Names.GENERIC + "." + Names.EXTENSION)) {
                 final Facet facet = mappedObject.getSpecification().getFacet(CollectionFacet.class);
                 if (facet != null) {
                     final ObjectSpecification specification = mappedObject.getSpecification();
                     final TypeOfFacet facet2 = specification.getFacet(TypeOfFacet.class);
-                    file = findFileForSpecification(context, facet2.valueSpec(), "collection", EXTENSION);
+                    file = findFileForSpecification(context, facet2.valueSpec(), "collection", Names.EXTENSION);
                 } else {
                     final ObjectAdapter mappedObject2 = mappedObject;
                     if (mappedObject2.isTransient()) {
-                        file = findFileForSpecification(context, mappedObject.getSpecification(), "edit", EXTENSION);
+                        file = findFileForSpecification(context, mappedObject.getSpecification(), "edit", Names.EXTENSION);
                     } else {
-                        file = findFileForSpecification(context, mappedObject.getSpecification(), "object", EXTENSION);
+                        file = findFileForSpecification(context, mappedObject.getSpecification(), "object", Names.EXTENSION);
                     }
                 }
-            } else if (fileName.equals(GENERIC + EDIT + "." + EXTENSION)) {
-                file = findFileForSpecification(context, mappedObject.getSpecification(), "edit", EXTENSION);
-            } else if (fileName.equals(GENERIC + ACTION + "." + EXTENSION)) {
+            } else if (fileName.equals(Names.GENERIC + Names.EDIT + "." + Names.EXTENSION)) {
+                file = findFileForSpecification(context, mappedObject.getSpecification(), "edit", Names.EXTENSION);
+            } else if (fileName.equals(Names.GENERIC + Names.ACTION + "." + Names.EXTENSION)) {
                 final String method = context.getParameter("method");
-                file = findFileForSpecification(context, mappedObject.getSpecification(), method, "action", EXTENSION);
+                file = findFileForSpecification(context, mappedObject.getSpecification(), method, "action", Names.EXTENSION);
             }
         }
         return file;
     }
 
-    private String findFileForSpecification(final RequestContext context, final ObjectSpecification specification, final String name, final String extension) {
+    private String findFileForSpecification(final Request context, final ObjectSpecification specification, final String name, final String extension) {
         return findFileForSpecification(context, specification, name, name, extension);
     }
 
-    private String findFileForSpecification(final RequestContext context, final ObjectSpecification specification, final String name, final String defaultName, final String extension) {
+    private String findFileForSpecification(final Request context, final ObjectSpecification specification, final String name, final String defaultName, final String extension) {
 
         String find = findFile(context, specification, name, extension);
         if (find == null) {
@@ -361,7 +375,7 @@ public class Dispatcher {
         return find;
     }
 
-    private String findFile(final RequestContext context, final ObjectSpecification specification, final String name, final String extension) {
+    private String findFile(final Request context, final ObjectSpecification specification, final String name, final String extension) {
         final String className = specification.getShortIdentifier();
         String fileName = context.findFile("/" + className + "/" + name + "." + extension);
         if (fileName == null) {
@@ -379,14 +393,14 @@ public class Dispatcher {
         return fileName;
     }
 
-    private Stack<Snippet> loadPageTemplate(final RequestContext context, final String path) throws IOException, FileNotFoundException {
+    private Stack<Snippet> loadPageTemplate(final Request context, final String path) throws IOException, FileNotFoundException {
         // TODO cache stacks and check for them first
         copyParametersToVariableList(context);
         LOG.debug("parsing source " + path);
         return parser.parseHtmlFile(path, context);
     }
 
-    private void copyParametersToVariableList(final RequestContext context) {
+    private void copyParametersToVariableList(final Request context) {
         /*
          * Enumeration parameterNames = context.getParameterNames(); while
          * (parameterNames.hasMoreElements()) { String name = (String)
@@ -418,7 +432,7 @@ public class Dispatcher {
             }
         }
 
-        processors.init();
+        AddElementProcessors.init(processors);
         processors.addElementProcessor(new org.apache.isis.viewer.scimpi.dispatcher.view.debug.Debug(this));
         
         showUnshownMessages = IsisContext.getConfiguration().getBoolean(SHOW_UNSHOWN_MESSAGES, true);
@@ -463,7 +477,7 @@ public class Dispatcher {
         action.init();
     }
 
-    public void debug(final DebugBuilder debug) {
+    public void debugData(final DebugBuilder debug) {
         debug.startSection("Actions");
         final Set<String> keySet = actions.keySet();
         final ArrayList<String> list = new ArrayList<String>(keySet);

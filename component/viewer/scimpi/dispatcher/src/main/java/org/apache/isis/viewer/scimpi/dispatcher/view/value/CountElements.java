@@ -22,22 +22,22 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.value;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.facets.collections.modify.CollectionFacet;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractObjectProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractObjectProcessor;
 
 public class CountElements extends AbstractObjectProcessor {
 
     @Override
-    protected void process(final Request request, final ObjectAdapter collection) {
+    protected void process(final TagProcessor tagProcessor, final ObjectAdapter collection) {
         final CollectionFacet facet = collection.getSpecification().getFacet(CollectionFacet.class);
         final int size = facet.size(collection);
         if (size == 0) {
-            request.appendHtml(request.getOptionalProperty("none", "0"));
+            tagProcessor.appendHtml(tagProcessor.getOptionalProperty("none", "0"));
         } else if (size == 1) {
-            request.appendHtml(request.getOptionalProperty("one", "1"));
+            tagProcessor.appendHtml(tagProcessor.getOptionalProperty("one", "1"));
         } else {
-            final String text = request.getOptionalProperty("many", "" + size);
-            request.appendHtml(String.format(text, size));
+            final String text = tagProcessor.getOptionalProperty("many", "" + size);
+            tagProcessor.appendHtml(String.format(text, size));
         }
     }
 

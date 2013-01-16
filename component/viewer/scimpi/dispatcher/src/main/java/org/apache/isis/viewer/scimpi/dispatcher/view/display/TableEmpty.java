@@ -21,27 +21,27 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.display;
 
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.facets.collections.modify.CollectionFacet;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class TableEmpty extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final TableBlock tableBlock = (TableBlock) request.getBlockContent();
+    public void process(final TagProcessor tagProcessor) {
+        final TableBlock tableBlock = (TableBlock) tagProcessor.getBlockContent();
         final ObjectAdapter collection = tableBlock.getCollection();
         final CollectionFacet facet = collection.getSpecification().getFacet(CollectionFacet.class);
         if (facet.size(collection) == 0) {
-            String className = request.getOptionalProperty(CLASS);
+            String className = tagProcessor.getOptionalProperty(CLASS);
             className = className == null ? "" : " class=\"" + className + "\"";
-            request.appendHtml("<tr" + className + ">");
-            request.pushNewBuffer();
-            request.processUtilCloseTag();
-            final String buffer = request.popBuffer();
-            request.appendHtml(buffer);
-            request.appendHtml("</td>");
+            tagProcessor.appendHtml("<tr" + className + ">");
+            tagProcessor.pushNewBuffer();
+            tagProcessor.processUtilCloseTag();
+            final String buffer = tagProcessor.popBuffer();
+            tagProcessor.appendHtml(buffer);
+            tagProcessor.appendHtml("</td>");
         } else {
-            request.skipUntilClose();
+            tagProcessor.skipUntilClose();
         }
     }
 

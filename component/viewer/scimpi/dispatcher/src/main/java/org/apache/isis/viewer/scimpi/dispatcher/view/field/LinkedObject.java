@@ -19,8 +19,8 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.field;
 
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
 
 public class LinkedObject {
     private final String variable;
@@ -36,7 +36,7 @@ public class LinkedObject {
     public LinkedObject(final String forwardView) {
         this.forwardView = forwardView;
         scope = Scope.INTERACTION.toString();
-        variable = RequestContext.RESULT;
+        variable = Names.RESULT;
     }
 
     public String getVariable() {

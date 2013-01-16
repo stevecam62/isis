@@ -19,27 +19,27 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class ScopeTag extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String name = request.getRequiredProperty(NAME);
-        final String scopeName = request.getRequiredProperty(SCOPE);
-        final Scope scope = RequestContext.scope(scopeName);
-        request.processUtilCloseTag();
-        changeScope(request, name, scope);
+    public void process(final TagProcessor tagProcessor) {
+        final String name = tagProcessor.getRequiredProperty(NAME);
+        final String scopeName = tagProcessor.getRequiredProperty(SCOPE);
+        final Scope scope = Request.scope(scopeName);
+        tagProcessor.processUtilCloseTag();
+        changeScope(tagProcessor, name, scope);
     }
 
-    protected static void changeScope(final Request request, final String name, final Scope scope) {
-        request.getContext().changeScope(name, scope);
-        final Object value = request.getContext().getVariable(name);
+    protected static void changeScope(final TagProcessor tagProcessor, final String name, final Scope scope) {
+        tagProcessor.getContext().changeScope(name, scope);
+        final Object value = tagProcessor.getContext().getVariable(name);
         if (value != null) {
-            request.getContext().addVariable(name, value, scope);
+            tagProcessor.getContext().addVariable(name, value, scope);
         }
     }
 

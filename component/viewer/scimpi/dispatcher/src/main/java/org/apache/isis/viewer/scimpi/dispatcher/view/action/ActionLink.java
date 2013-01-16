@@ -24,12 +24,12 @@ import java.net.URLEncoder;
 import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
-import org.apache.isis.viewer.scimpi.dispatcher.view.HelpLink;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.other.HelpLink;
 
 public class ActionLink extends AbstractElementProcessor {
 
@@ -37,43 +37,43 @@ public class ActionLink extends AbstractElementProcessor {
     private final Where where = Where.OBJECT_FORMS;
 
     @Override
-    public void process(final Request request) {
-        String objectId = request.getOptionalProperty(OBJECT);
-        final String method = request.getOptionalProperty(METHOD);
-        final String forwardResultTo = request.getOptionalProperty(VIEW);
-        final String forwardVoidTo = request.getOptionalProperty(VOID);
-        String resultOverride = request.getOptionalProperty(RESULT_OVERRIDE);
+    public void process(final TagProcessor tagProcessor) {
+        String objectId = tagProcessor.getOptionalProperty(OBJECT);
+        final String method = tagProcessor.getOptionalProperty(METHOD);
+        final String forwardResultTo = tagProcessor.getOptionalProperty(VIEW);
+        final String forwardVoidTo = tagProcessor.getOptionalProperty(VOID);
+        String resultOverride = tagProcessor.getOptionalProperty(RESULT_OVERRIDE);
         
-        final String resultName = request.getOptionalProperty(RESULT_NAME);
+        final String resultName = tagProcessor.getOptionalProperty(RESULT_NAME);
         final String resultNameSegment = resultName == null ? "" : "&amp;" + RESULT_NAME + "=" + resultName;
-        final String scope = request.getOptionalProperty(SCOPE);
+        final String scope = tagProcessor.getOptionalProperty(SCOPE);
         final String scopeSegment = scope == null ? "" : "&amp;" + SCOPE + "=" + scope;
-        final String confirm = request.getOptionalProperty(CONFIRM);
-        final String completionMessage = request.getOptionalProperty(MESSAGE);
+        final String confirm = tagProcessor.getOptionalProperty(CONFIRM);
+        final String completionMessage = tagProcessor.getOptionalProperty(MESSAGE);
 
         // TODO need a mechanism for globally dealing with encoding; then use
         // the new encode method
         final String confirmSegment = confirm == null ? "" : "&amp;" + "_" + CONFIRM + "=" + URLEncoder.encode(confirm);
         final String messageSegment = completionMessage == null ? "" : "&amp;" + "_" + MESSAGE + "=" + URLEncoder.encode(completionMessage);
 
-        final RequestContext context = request.getContext();
+        final Request context = tagProcessor.getContext();
         final ObjectAdapter object = MethodsUtils.findObject(context, objectId);
         final String version = context.mapVersion(object);
         final ObjectAction action = MethodsUtils.findAction(object, method);
-        objectId = request.getContext().mapObject(object, Scope.REQUEST);
+        objectId = tagProcessor.getContext().mapObject(object, Scope.REQUEST);
 
         final ActionContent parameterBlock = new ActionContent(action);
-        request.setBlockContent(parameterBlock);
-        request.pushNewBuffer();
-        request.processUtilCloseTag();
-        final String text = request.popBuffer();
+        tagProcessor.setBlockContent(parameterBlock);
+        tagProcessor.pushNewBuffer();
+        tagProcessor.processUtilCloseTag();
+        final String text = tagProcessor.popBuffer();
         
         final String[] parameters = parameterBlock.getParameters();
         final String target;
         if (action.isContributed()) {
             System.arraycopy(parameters, 0, parameters, 1, parameters.length - 1);
-            parameters[0] = request.getContext().mapObject(object, Scope.REQUEST);
-            target =  request.getContext().mapObject(action.realTarget(object), Scope.REQUEST);
+            parameters[0] = tagProcessor.getContext().mapObject(object, Scope.REQUEST);
+            target =  tagProcessor.getContext().mapObject(action.realTarget(object), Scope.REQUEST);
             if (!action.hasReturn() && resultOverride == null) {
                 resultOverride = parameters[0];
             }
@@ -82,14 +82,14 @@ public class ActionLink extends AbstractElementProcessor {
         }
 
         if (MethodsUtils.isVisibleAndUsable(object, action, where)) {
-            writeLink(request, target, version, method, forwardResultTo, forwardVoidTo, resultNameSegment, resultOverride, scopeSegment,
+            writeLink(tagProcessor, target, version, method, forwardResultTo, forwardVoidTo, resultNameSegment, resultOverride, scopeSegment,
                     confirmSegment, messageSegment, context, action, parameters, text);
         }
-        request.popBlockContent();
+        tagProcessor.popBlockContent();
     }
 
     public static void writeLink(
-            final Request request,
+            final TagProcessor tagProcessor,
             final String objectId,
             final String version,
             final String method,
@@ -100,7 +100,7 @@ public class ActionLink extends AbstractElementProcessor {
             final String scopeSegment,
             final String confirmSegment,
             final String messageSegment,
-            final RequestContext context,
+            final Request context,
             final ObjectAction action,
             final String[] parameters,
             String text) {
@@ -116,12 +116,12 @@ public class ActionLink extends AbstractElementProcessor {
         final String resultOverrideSegment = resultOverride == null ? "" : "&amp;" + "_" + RESULT_OVERRIDE + "=" + resultOverride;
         final String voidView = context.fullFilePath(forwardVoidTo == null ? context.getResourceFile() : forwardVoidTo);
         final String forwardVoidSegment = "&amp;" + "_" + VOID + "=" + voidView;
-        request.appendHtml("<a href=\"action.app?" + "_" + OBJECT + "=" + objectId + "&amp;" + "_" + VERSION + "=" + version
+        tagProcessor.appendHtml("<a href=\"action.app?" + "_" + OBJECT + "=" + objectId + "&amp;" + "_" + VERSION + "=" + version
                 + "&amp;" + "_" + METHOD + "=" + method + resultOverrideSegment + forwardResultSegment + forwardVoidSegment + resultNameSegment
                 + parameterSegment + scopeSegment + confirmSegment + messageSegment + interactionParamters + "\">");
-        request.appendHtml(text);
-        request.appendHtml("</a>");
-        HelpLink.append(request, action.getDescription(), action.getHelp());
+        tagProcessor.appendHtml(text);
+        tagProcessor.appendHtml("</a>");
+        HelpLink.append(tagProcessor, action.getDescription(), action.getHelp());
     }
 
     @Override

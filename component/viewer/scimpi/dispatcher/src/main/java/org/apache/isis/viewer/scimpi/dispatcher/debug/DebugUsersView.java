@@ -19,8 +19,8 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.debug;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class DebugUsersView extends AbstractElementProcessor {
 
@@ -30,21 +30,21 @@ public class DebugUsersView extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final Request request) {
-        final String view = request.getContext().getContextPath() + request.getContext().getResourceParentPath() + request.getContext().getResourceFile();
+    public void process(final TagProcessor tagProcessor) {
+        final String view = tagProcessor.getContext().getContextPath() + tagProcessor.getContext().getResourceParentPath() + tagProcessor.getContext().getResourceFile();
 
-        request.appendHtml("<form class=\"generic action\" action=\"debug-user.app\" method=\"post\" accept-charset=\"ISO-8859-1\">\n");
-        request.appendHtml("<div class=\"title\">Add Debug User</div>\n");
-        request.appendHtml("<div class=\"field\"><label>User Name:</label><input type=\"text\" name=\"name\" size=\"30\" /></div>\n");
-        request.appendHtml("<input type=\"hidden\" name=\"method\" value=\"add\" />\n");
-        request.appendHtml("<input type=\"hidden\" name=\"view\" value=\"" + view + "\" />\n");
-        request.appendHtml("<input class=\"button\" type=\"submit\" value=\"Add User\" />\n");
-        request.appendHtml("</form>\n");
+        tagProcessor.appendHtml("<form class=\"generic action\" action=\"debug-user.app\" method=\"post\" accept-charset=\"ISO-8859-1\">\n");
+        tagProcessor.appendHtml("<div class=\"title\">Add Debug User</div>\n");
+        tagProcessor.appendHtml("<div class=\"field\"><label>User Name:</label><input type=\"text\" name=\"name\" size=\"30\" /></div>\n");
+        tagProcessor.appendHtml("<input type=\"hidden\" name=\"method\" value=\"add\" />\n");
+        tagProcessor.appendHtml("<input type=\"hidden\" name=\"view\" value=\"" + view + "\" />\n");
+        tagProcessor.appendHtml("<input class=\"button\" type=\"submit\" value=\"Add User\" />\n");
+        tagProcessor.appendHtml("</form>\n");
 
-        request.appendHtml("<table class=\"debug\">\n<tr><th class=\"title\">Name</th><th class=\"title\"></th></tr>\n");
-        for (final String name : request.getContext().getDebugUsers()) {
-            request.appendHtml("<tr><th>" + name + "</th><th><a href=\"debug-user.app?method=remove&name=" + name + "&view=" + view + " \">remove</a></th></tr>\n");
+        tagProcessor.appendHtml("<table class=\"debug\">\n<tr><th class=\"title\">Name</th><th class=\"title\"></th></tr>\n");
+        for (final String name : tagProcessor.getContext().getDebugUsers()) {
+            tagProcessor.appendHtml("<tr><th>" + name + "</th><th><a href=\"debug-user.app?method=remove&name=" + name + "&view=" + view + " \">remove</a></th></tr>\n");
         }
-        request.appendHtml("</table>\n");
+        tagProcessor.appendHtml("</table>\n");
     }
 }

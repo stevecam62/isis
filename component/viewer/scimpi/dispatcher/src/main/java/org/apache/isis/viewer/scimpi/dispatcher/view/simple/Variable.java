@@ -19,31 +19,31 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Variable extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String name = request.getOptionalProperty(NAME);
-        final String value = request.getOptionalProperty(VALUE);
-        final String defaultTo = request.getOptionalProperty(DEFAULT);
-        final String scopeName = request.getOptionalProperty(SCOPE);
-        final boolean isClear = request.getOptionalProperty("action", "set").equals("clear");
-        final Scope scope = RequestContext.scope(scopeName, isClear ? Scope.SESSION : Scope.REQUEST);
-        process(request, name, value, defaultTo, isClear, scope);
+    public void process(final TagProcessor tagProcessor) {
+        final String name = tagProcessor.getOptionalProperty(NAME);
+        final String value = tagProcessor.getOptionalProperty(VALUE);
+        final String defaultTo = tagProcessor.getOptionalProperty(DEFAULT);
+        final String scopeName = tagProcessor.getOptionalProperty(SCOPE);
+        final boolean isClear = tagProcessor.getOptionalProperty("action", "set").equals("clear");
+        final Scope scope = Request.scope(scopeName, isClear ? Scope.SESSION : Scope.REQUEST);
+        process(tagProcessor, name, value, defaultTo, isClear, scope);
     }
 
-    protected void process(final Request request, final String name, final String value, final String defaultTo, final boolean isClear, final Scope scope) {
-        request.pushNewBuffer();
-        request.processUtilCloseTag();
-        String source = request.popBuffer();
+    protected void process(final TagProcessor tagProcessor, final String name, final String value, final String defaultTo, final boolean isClear, final Scope scope) {
+        tagProcessor.pushNewBuffer();
+        tagProcessor.processUtilCloseTag();
+        String source = tagProcessor.popBuffer();
         if (isClear) {
-            request.appendDebug("variable: " + name + " (cleared)");
-            request.getContext().clearVariable(name, scope);
+            tagProcessor.appendDebug("variable: " + name + " (cleared)");
+            tagProcessor.getContext().clearVariable(name, scope);
         } else {
             if (source.length() == 0 && value != null) {
                 source = value;
@@ -51,8 +51,8 @@ public class Variable extends AbstractElementProcessor {
             if (source.length() == 0) {
                 source = defaultTo;
             }
-            request.appendDebug("    " + name + " (" + scope + ") set to " + source);
-            request.getContext().addVariable(name, source, scope);
+            tagProcessor.appendDebug("    " + name + " (" + scope + ") set to " + source);
+            tagProcessor.getContext().addVariable(name, source, scope);
         }
     }
 

@@ -19,28 +19,28 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class DefaultValue extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
+    public void process(final TagProcessor tagProcessor) {
         // String sourceObjectId = objectOrResult(request);
-        final String variableName = request.getRequiredProperty(NAME);
-        final String defaultValue = request.getOptionalProperty(VALUE);
-        final String scopeName = request.getOptionalProperty(SCOPE);
-        final Scope scope = RequestContext.scope(scopeName, Scope.REQUEST);
+        final String variableName = tagProcessor.getRequiredProperty(NAME);
+        final String defaultValue = tagProcessor.getOptionalProperty(VALUE);
+        final String scopeName = tagProcessor.getOptionalProperty(SCOPE);
+        final Scope scope = Request.scope(scopeName, Scope.REQUEST);
 
-        final RequestContext context = request.getContext();
+        final Request context = tagProcessor.getContext();
         final Object currentValue = context.getVariable(variableName);
         if (currentValue == null) {
-            request.appendDebug("     " + variableName + " set to " + defaultValue + " (" + scope + ")");
+            tagProcessor.appendDebug("     " + variableName + " set to " + defaultValue + " (" + scope + ")");
             context.addVariable(variableName, defaultValue, scope);
         } else {
-            request.appendDebug("     " + variableName + " alreadt set to " + currentValue);
+            tagProcessor.appendDebug("     " + variableName + " alreadt set to " + currentValue);
         }
     }
 

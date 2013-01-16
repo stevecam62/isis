@@ -23,9 +23,9 @@ import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ForbiddenException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 /**
  * 
@@ -33,11 +33,11 @@ import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
 public class TitleString extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String id = request.getOptionalProperty(OBJECT);
-        final String fieldName = request.getOptionalProperty(FIELD);
-        final int truncateTo = Integer.valueOf(request.getOptionalProperty(TRUNCATE, "0")).intValue();
-        final ObjectAdapter object = request.getContext().getMappedObjectOrResult(id);
+    public void process(final TagProcessor tagProcessor) {
+        final String id = tagProcessor.getOptionalProperty(OBJECT);
+        final String fieldName = tagProcessor.getOptionalProperty(FIELD);
+        final int truncateTo = Integer.valueOf(tagProcessor.getOptionalProperty(TRUNCATE, "0")).intValue();
+        final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
         if (object == null) { 
             return; 
         } 
@@ -56,8 +56,8 @@ public class TitleString extends AbstractElementProcessor {
                 titleString = "";
             }
         }
-        request.appendDebug("    " + titleString);
-        request.appendTruncated(titleString, truncateTo);
+        tagProcessor.appendDebug("    " + titleString);
+        tagProcessor.appendTruncated(titleString, truncateTo);
     }
 
     @Override

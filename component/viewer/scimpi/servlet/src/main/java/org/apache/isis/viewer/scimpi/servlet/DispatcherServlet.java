@@ -29,8 +29,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.UserManager;
-import org.apache.isis.viewer.scimpi.dispatcher.debug.DebugUsers;
+import org.apache.isis.viewer.scimpi.dispatcher.Response;
+import org.apache.isis.viewer.scimpi.security.DebugUsers;
+import org.apache.isis.viewer.scimpi.security.UserManager;
 import org.apache.log4j.Logger;
 
 public class DispatcherServlet extends HttpServlet {
@@ -55,7 +56,8 @@ public class DispatcherServlet extends HttpServlet {
         try {
             final ServletRequestContext context = new ServletRequestContext(debugUsers);
             context.startRequest(request, response, getServletContext());
-            dispatcher.process(context, request.getServletPath());
+            Response resp = new Response() {};
+            dispatcher.process(context, resp, request.getServletPath());
         } catch (final RuntimeException e) {
             LOG.error("servlet exception", e);
             throw e;

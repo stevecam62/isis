@@ -22,8 +22,8 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
-import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
 
 public class NewActionLink extends AbstractLink {
@@ -32,8 +32,8 @@ public class NewActionLink extends AbstractLink {
     private final Where where = Where.OBJECT_FORMS;
 
     @Override
-    protected boolean valid(final Request request, final ObjectAdapter object) {
-        final String method = request.getRequiredProperty(METHOD);
+    protected boolean valid(final TagProcessor tagProcessor, final ObjectAdapter object) {
+        final String method = tagProcessor.getRequiredProperty(METHOD);
         final ObjectAction action = MethodsUtils.findAction(object, method);
         return MethodsUtils.isVisibleAndUsable(object, action, where);
     }
@@ -45,12 +45,12 @@ public class NewActionLink extends AbstractLink {
 
     @Override
     protected String defaultView() {
-        return "_generic_action." + Dispatcher.EXTENSION;
+        return "_generic_action." + Names.EXTENSION;
     }
 
     @Override
-    protected String additionalParameters(final Request request) {
-        final String method = request.getRequiredProperty(METHOD);
+    protected String additionalParameters(final TagProcessor tagProcessor) {
+        final String method = tagProcessor.getRequiredProperty(METHOD);
         return "method=" + method;
     }
 

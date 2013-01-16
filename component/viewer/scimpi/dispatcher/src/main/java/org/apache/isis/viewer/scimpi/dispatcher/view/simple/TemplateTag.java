@@ -18,8 +18,8 @@
  */
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.ElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.ElementProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 
 public class TemplateTag implements ElementProcessor {
 
@@ -29,7 +29,7 @@ public class TemplateTag implements ElementProcessor {
     }
 
     @Override
-    public void process(final Request request) {
+    public void process(final TagProcessor tagProcessor) {
         // REVIEW this make IE8 render poorly as the browser doesn't think a
         // DOCTYPE is provided, causing it to run in
         // quirk mode

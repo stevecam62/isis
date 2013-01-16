@@ -20,53 +20,53 @@
 package org.apache.isis.viewer.scimpi.dispatcher.view.logon;
 
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class User extends AbstractElementProcessor {
     private static final String LOGIN_VIEW = "login-view";
-    private static final String DEFAULT_LOGIN_VIEW = "login." + Dispatcher.EXTENSION;
+    private static final String DEFAULT_LOGIN_VIEW = "login." + Names.EXTENSION;
     private static final String LOGOUT_VIEW = "logout-view";
-    private static final String DEFAULT_LOGOUT_VIEW = "logout." + Dispatcher.EXTENSION;
+    private static final String DEFAULT_LOGOUT_VIEW = "logout." + Names.EXTENSION;
 
     @Override
-    public void process(final Request request) {
-        final boolean isAuthenticatedn = request.getContext().isUserAuthenticated();
-        request.appendHtml("<div class=\"user\">");
+    public void process(final TagProcessor tagProcessor) {
+        final boolean isAuthenticatedn = tagProcessor.getContext().isUserAuthenticated();
+        tagProcessor.appendHtml("<div class=\"user\">");
         if (isAuthenticatedn) {
-            displayUserAndLogoutLink(request);
+            displayUserAndLogoutLink(tagProcessor);
         } else {
-            displayLoginForm(request);
+            displayLoginForm(tagProcessor);
         }
-        request.appendHtml("</div>");
+        tagProcessor.appendHtml("</div>");
     }
 
-    public void displayLoginForm(final Request request) {
-        String loginView = request.getOptionalProperty(LOGIN_VIEW);
+    public void displayLoginForm(final TagProcessor tagProcessor) {
+        String loginView = tagProcessor.getOptionalProperty(LOGIN_VIEW);
         if (loginView == null) {
-            Logon.loginForm(request, ".");
+            Logon.loginForm(tagProcessor, ".");
         } else {
             if (loginView.trim().length() == 0) {
                 loginView = DEFAULT_LOGIN_VIEW;
             }
-            request.appendHtml("<a div class=\"link\" href=\"" + loginView + "\">Log in</a>");
+            tagProcessor.appendHtml("<a div class=\"link\" href=\"" + loginView + "\">Log in</a>");
         }
     }
 
-    public void displayUserAndLogoutLink(final Request request) {
-        String user = request.getOptionalProperty(NAME);
+    public void displayUserAndLogoutLink(final TagProcessor tagProcessor) {
+        String user = tagProcessor.getOptionalProperty(NAME);
         if (user == null) {
-            user = (String) request.getContext().getVariable("_username");
+            user = (String) tagProcessor.getContext().getVariable("_username");
         }
         if (user == null) {
             user = IsisContext.getAuthenticationSession().getUserName();
         }
-        request.appendHtml("Welcome <span class=\"name\">");
-        request.appendAsHtmlEncoded(user);
-        request.appendHtml("</span>, ");
-        final String logoutView = request.getOptionalProperty(LOGOUT_VIEW, DEFAULT_LOGOUT_VIEW);
-        request.appendHtml("<a class=\"link\" href=\"logout.app?view=" + logoutView + "\">Log out</a>");
+        tagProcessor.appendHtml("Welcome <span class=\"name\">");
+        tagProcessor.appendAsHtmlEncoded(user);
+        tagProcessor.appendHtml("</span>, ");
+        final String logoutView = tagProcessor.getOptionalProperty(LOGOUT_VIEW, DEFAULT_LOGOUT_VIEW);
+        tagProcessor.appendHtml("<a class=\"link\" href=\"logout.app?view=" + logoutView + "\">Log out</a>");
     }
 
     @Override

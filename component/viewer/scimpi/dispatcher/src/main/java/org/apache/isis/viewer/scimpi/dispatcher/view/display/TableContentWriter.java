@@ -20,9 +20,9 @@
 package org.apache.isis.viewer.scimpi.dispatcher.view.display;
 
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.PageWriter;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 
 public interface TableContentWriter {
 
@@ -32,7 +32,7 @@ public interface TableContentWriter {
 
     void writeFooters(PageWriter writer);
 
-    void writeElement(Request request, RequestContext context, ObjectAdapter element);
+    void writeElement(TagProcessor tagProcessor, Request context, ObjectAdapter element);
 
     void tidyUp();
 

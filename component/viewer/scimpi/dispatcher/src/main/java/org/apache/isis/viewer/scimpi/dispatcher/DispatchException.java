@@ -19,6 +19,9 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher;
 
+import org.apache.isis.viewer.scimpi.ScimpiException;
+
+
 public class DispatchException extends ScimpiException {
     private static final long serialVersionUID = 1L;
 

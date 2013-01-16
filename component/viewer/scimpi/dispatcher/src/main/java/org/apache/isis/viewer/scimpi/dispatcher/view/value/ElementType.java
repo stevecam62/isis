@@ -22,20 +22,20 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.value;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.ObjectSpecification;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class ElementType extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
+    public void process(final TagProcessor tagProcessor) {
         ObjectAdapter collection;
-        final String field = request.getOptionalProperty(FIELD);
-        final RequestContext context = request.getContext();
+        final String field = tagProcessor.getOptionalProperty(FIELD);
+        final Request context = tagProcessor.getContext();
         if (field != null) {
-            final String id = request.getRequiredProperty(OBJECT);
+            final String id = tagProcessor.getRequiredProperty(OBJECT);
             final ObjectAdapter object = context.getMappedObjectOrResult(id);
             final ObjectAssociation objectField = object.getSpecification().getAssociation(field);
             if (!objectField.isOneToManyAssociation()) {
@@ -43,14 +43,14 @@ public class ElementType extends AbstractElementProcessor {
             }
             collection = objectField.get(object);
         } else {
-            final String id = request.getOptionalProperty(COLLECTION);
+            final String id = tagProcessor.getOptionalProperty(COLLECTION);
             collection = context.getMappedObjectOrResult(id);
         }
 
         final ObjectSpecification elementSpecification = collection.getElementSpecification();
         final String name = elementSpecification.getSingularName();
 
-        request.appendAsHtmlEncoded(name);
+        tagProcessor.appendAsHtmlEncoded(name);
     }
 
     @Override

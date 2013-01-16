@@ -19,15 +19,15 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.field;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class ExcludeField extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String field = request.getOptionalProperty(NAME);
-        final InclusionList block = (InclusionList) request.getBlockContent();
+    public void process(final TagProcessor tagProcessor) {
+        final String field = tagProcessor.getOptionalProperty(NAME);
+        final InclusionList block = (InclusionList) tagProcessor.getBlockContent();
         block.exclude(field);
     }
 

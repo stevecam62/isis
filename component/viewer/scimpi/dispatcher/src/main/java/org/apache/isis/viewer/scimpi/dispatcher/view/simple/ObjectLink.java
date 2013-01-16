@@ -27,8 +27,8 @@ import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociationFilters;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 
 public class ObjectLink extends AbstractLink {
 
@@ -40,7 +40,7 @@ public class ObjectLink extends AbstractLink {
     private final Where where = Where.ANYWHERE;
 
     @Override
-    protected boolean valid(final Request request, final ObjectAdapter object) {
+    protected boolean valid(final TagProcessor tagProcessor, final ObjectAdapter object) {
         final AuthenticationSession session = IsisContext.getAuthenticationSession();
         final List<ObjectAssociation> visibleFields = object.getSpecification().getAssociations(ObjectAssociationFilters.dynamicallyVisible(session, object, where));
         return visibleFields.size() > 0;
@@ -57,7 +57,7 @@ public class ObjectLink extends AbstractLink {
 
     @Override
     protected String defaultView() {
-        return Dispatcher.GENERIC + "." + Dispatcher.EXTENSION;
+        return Names.GENERIC + "." + Names.EXTENSION;
     }
 
     @Override

@@ -19,14 +19,14 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Import extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        request.appendHtml("<!-- " + " import " + request.getOptionalProperty("file") + " -->");
+    public void process(final TagProcessor tagProcessor) {
+        tagProcessor.appendHtml("<!-- " + " import " + tagProcessor.getOptionalProperty("file") + " -->");
     }
 
     @Override

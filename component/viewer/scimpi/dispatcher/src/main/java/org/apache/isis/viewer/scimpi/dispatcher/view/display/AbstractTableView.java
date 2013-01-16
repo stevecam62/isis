@@ -31,11 +31,11 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociationFilters;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.core.runtime.system.persistence.Persistor;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public abstract class AbstractTableView extends AbstractElementProcessor {
 
@@ -47,18 +47,18 @@ public abstract class AbstractTableView extends AbstractElementProcessor {
     private final Where where = Where.ALL_TABLES;
 
     @Override
-    public void process(final Request request) {
-        final RequestContext context = request.getContext();
+    public void process(final TagProcessor tagProcessor) {
+        final Request context = tagProcessor.getContext();
 
         ObjectAdapter collection;
         String parentObjectId = null;
         boolean isFieldEditable = false;
-        final String field = request.getOptionalProperty(FIELD);
-        final String tableClass = request.getOptionalProperty(CLASS);
+        final String field = tagProcessor.getOptionalProperty(FIELD);
+        final String tableClass = tagProcessor.getOptionalProperty(CLASS);
         ObjectSpecification elementSpec;
         String tableId;
         if (field != null) {
-            final String objectId = request.getOptionalProperty(OBJECT);
+            final String objectId = tagProcessor.getOptionalProperty(OBJECT);
             final ObjectAdapter object = context.getMappedObjectOrResult(objectId);
             if (object == null) {
                 throw new ScimpiException("No object for result or " + objectId);
@@ -73,24 +73,24 @@ public abstract class AbstractTableView extends AbstractElementProcessor {
             final TypeOfFacet facet = objectField.getFacet(TypeOfFacet.class);
             elementSpec = facet.valueSpec();
             parentObjectId = objectId == null ? context.mapObject(object, Scope.REQUEST) : objectId;
-            tableId = request.getOptionalProperty(ID, field);
+            tableId = tagProcessor.getOptionalProperty(ID, field);
         } else {
-            final String id = request.getOptionalProperty(COLLECTION);
+            final String id = tagProcessor.getOptionalProperty(COLLECTION);
             collection = context.getMappedObjectOrResult(id);
             elementSpec = collection.getElementSpecification();
-            tableId = request.getOptionalProperty(ID, collection.getElementSpecification().getShortIdentifier());
+            tableId = tagProcessor.getOptionalProperty(ID, collection.getElementSpecification().getShortIdentifier());
         }
 
-        final String summary = request.getOptionalProperty("summary");
-        final String rowClassesList = request.getOptionalProperty(ROW_CLASSES, ODD_ROW_CLASS + "|" + EVEN_ROW_CLASS);
+        final String summary = tagProcessor.getOptionalProperty("summary");
+        final String rowClassesList = tagProcessor.getOptionalProperty(ROW_CLASSES, ODD_ROW_CLASS + "|" + EVEN_ROW_CLASS);
         String[] rowClasses = null;
         if (rowClassesList.length() > 0) {
             rowClasses = rowClassesList.split("[,|/]");
         }
 
         final List<ObjectAssociation> allFields = elementSpec.getAssociations(ObjectAssociationFilters.WHEN_VISIBLE_IRRESPECTIVE_OF_WHERE);
-        final TableContentWriter rowBuilder = createRowBuilder(request, context, isFieldEditable ? parentObjectId : null, allFields, collection);
-        write(request, collection, summary, rowBuilder, tableId, tableClass, rowClasses);
+        final TableContentWriter rowBuilder = createRowBuilder(tagProcessor, context, isFieldEditable ? parentObjectId : null, allFields, collection);
+        write(tagProcessor, collection, summary, rowBuilder, tableId, tableClass, rowClasses);
 
     }
 
@@ -98,27 +98,27 @@ public abstract class AbstractTableView extends AbstractElementProcessor {
         return IsisContext.getPersistenceSession();
     }
 
-    protected abstract TableContentWriter createRowBuilder(final Request request, RequestContext context, final String parent, final List<ObjectAssociation> allFields, ObjectAdapter collection);
+    protected abstract TableContentWriter createRowBuilder(final TagProcessor tagProcessor, Request context, final String parent, final List<ObjectAssociation> allFields, ObjectAdapter collection);
 
     public static void write(
-            final Request request,
+            final TagProcessor tagProcessor,
             final ObjectAdapter collection,
             final String summary,
             final TableContentWriter rowBuilder,
             final String tableId,
             final String tableClass,
             final String[] rowClasses) {
-        final RequestContext context = request.getContext();
+        final Request context = tagProcessor.getContext();
 
         final String summarySegment = summary == null ? "" : (" summary=\"" + summary + "\"");
         final String idSegment = tableId == null ? "" : (" id=\"" + tableId + "\""); 
         final String classSegment = tableClass == null ? "" : (" class=\"" + tableClass + "\"");
-        request.appendHtml("<table" + idSegment + classSegment + summarySegment + ">");
-        rowBuilder.writeCaption(request);
-        rowBuilder.writeHeaders(request);
-        rowBuilder.writeFooters(request);
+        tagProcessor.appendHtml("<table" + idSegment + classSegment + summarySegment + ">");
+        rowBuilder.writeCaption(tagProcessor);
+        rowBuilder.writeHeaders(tagProcessor);
+        rowBuilder.writeFooters(tagProcessor);
 
-        request.appendHtml("<tbody>");
+        tagProcessor.appendHtml("<tbody>");
         final CollectionFacet facet = collection.getSpecification().getFacet(CollectionFacet.class);
         final Iterator<ObjectAdapter> iterator = facet.iterator(collection);
         int row = 1;
@@ -130,13 +130,13 @@ public abstract class AbstractTableView extends AbstractElementProcessor {
             if (rowClasses != null) {
                 cls = " class=\"" + rowClasses[row % rowClasses.length] + "\"";
             }
-            request.appendHtml("<tr" + cls + ">");
-            rowBuilder.writeElement(request, context, element);
-            request.appendHtml("</tr>");
+            tagProcessor.appendHtml("<tr" + cls + ">");
+            rowBuilder.writeElement(tagProcessor, context, element);
+            tagProcessor.appendHtml("</tr>");
             row++;
         }
-        request.appendHtml("</tbody>");
-        request.appendHtml("</table>");
+        tagProcessor.appendHtml("</tbody>");
+        tagProcessor.appendHtml("</table>");
         
         rowBuilder.tidyUp();
     }

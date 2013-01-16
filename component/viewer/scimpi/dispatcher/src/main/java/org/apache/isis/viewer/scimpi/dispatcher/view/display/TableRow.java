@@ -19,10 +19,10 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.display;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request.RepeatMarker;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor.RepeatMarker;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class TableRow extends AbstractElementProcessor {
 
@@ -32,18 +32,18 @@ public class TableRow extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final Request request) {
-        final TableBlock block = (TableBlock) request.getBlockContent();
+    public void process(final TagProcessor tagProcessor) {
+        final TableBlock block = (TableBlock) tagProcessor.getBlockContent();
         
-        final RepeatMarker start = request.createMarker();
+        final RepeatMarker start = tagProcessor.createMarker();
         block.setMarker(start);
         
-        final String linkView = request.getOptionalProperty(LINK_VIEW);
+        final String linkView = tagProcessor.getOptionalProperty(LINK_VIEW);
         if (linkView != null) {
             block.setlinkView(linkView);
-            block.setlinkName(request.getOptionalProperty(LINK_NAME, RequestContext.RESULT));
+            block.setlinkName(tagProcessor.getOptionalProperty(LINK_NAME, Names.RESULT));
         }
         
-        request.skipUntilClose();
+        tagProcessor.skipUntilClose();
     }
 }

@@ -19,32 +19,32 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.display;
 
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Errors extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        final String cls = request.getOptionalProperty(CLASS);
+    public void process(final TagProcessor tagProcessor) {
+        final String cls = tagProcessor.getOptionalProperty(CLASS);
         final StringBuffer buffer = new StringBuffer();
-        write(request, cls, buffer);
+        write(tagProcessor, cls, buffer);
         if (buffer.length() > 0) {
-            request.appendHtml("<div class=\"error\">");
-            request.appendHtml(buffer.toString());
-            request.appendHtml("</div>");
+            tagProcessor.appendHtml("<div class=\"error\">");
+            tagProcessor.appendHtml(buffer.toString());
+            tagProcessor.appendHtml("</div>");
         }
     }
 
-    public static void write(final Request request, String cls, final StringBuffer buffer) {
+    public static void write(final TagProcessor tagProcessor, String cls, final StringBuffer buffer) {
         if (cls == null) {
             cls = "error";
         }
-        final String message = (String) request.getContext().getVariable("_error-message");
+        final String message = (String) tagProcessor.getContext().getVariable("_error-message");
         if (message != null) {
             buffer.append(message);
         }
-        final String details = (String) request.getContext().getVariable("_error-details");
+        final String details = (String) tagProcessor.getContext().getVariable("_error-details");
         if (details != null) {
             buffer.append(details);
         }

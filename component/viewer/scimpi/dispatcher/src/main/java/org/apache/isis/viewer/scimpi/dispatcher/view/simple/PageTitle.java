@@ -19,13 +19,13 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
 
 public class PageTitle extends Variable {
     @Override
-    public void process(final Request request) {
-        process(request, "title", null, null, false, Scope.REQUEST);
+    public void process(final TagProcessor tagProcessor) {
+        process(tagProcessor, "title", null, null, false, Scope.REQUEST);
     }
 
     @Override

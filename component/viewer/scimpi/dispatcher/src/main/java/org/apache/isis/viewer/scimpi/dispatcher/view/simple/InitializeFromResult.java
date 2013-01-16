@@ -20,33 +20,34 @@
 package org.apache.isis.viewer.scimpi.dispatcher.view.simple;
 
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
-import org.apache.isis.viewer.scimpi.dispatcher.AbstractElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext;
-import org.apache.isis.viewer.scimpi.dispatcher.context.RequestContext.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Request;
+import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.ScimpiException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class InitializeFromResult extends AbstractElementProcessor {
 
     @Override
-    public void process(final Request request) {
-        disallowSourceAndDefault(request);
-        final String sourceObjectId = objectOrResult(request);
-        final Class<?> cls = forClass(request);
-        final String variableName = request.getRequiredProperty(NAME);
-        final String defaultObjectId = request.getOptionalProperty(DEFAULT);
-        final String scopeName = request.getOptionalProperty(SCOPE);
-        final Scope scope = RequestContext.scope(scopeName, Scope.REQUEST);
+    public void process(final TagProcessor tagProcessor) {
+        disallowSourceAndDefault(tagProcessor);
+        final String sourceObjectId = objectOrResult(tagProcessor);
+        final Class<?> cls = forClass(tagProcessor);
+        final String variableName = tagProcessor.getRequiredProperty(NAME);
+        final String defaultObjectId = tagProcessor.getOptionalProperty(DEFAULT);
+        final String scopeName = tagProcessor.getOptionalProperty(SCOPE);
+        final Scope scope = Request.scope(scopeName, Scope.REQUEST);
 
-        final RequestContext context = request.getContext();
+        final Request context = tagProcessor.getContext();
         final ObjectAdapter sourceObject = context.getMappedObject(sourceObjectId);
         final boolean isSourceSet = sourceObject != null;
         final boolean isSourceAssignable = isSourceSet && (cls == null || cls.isAssignableFrom(sourceObject.getObject().getClass()));
         if (isSourceAssignable) {
-            request.appendDebug("     " + variableName + " set to " + sourceObjectId + " (" + scope + ")");
+            tagProcessor.appendDebug("     " + variableName + " set to " + sourceObjectId + " (" + scope + ")");
             context.addVariable(variableName, sourceObjectId, scope);
         } else {
-            request.appendDebug("     " + variableName + " set to " + sourceObjectId + " (" + scope + ")");
+            tagProcessor.appendDebug("     " + variableName + " set to " + sourceObjectId + " (" + scope + ")");
             if (defaultObjectId != null) {
                 context.addVariable(variableName, defaultObjectId, scope);
             }
@@ -54,17 +55,17 @@ public class InitializeFromResult extends AbstractElementProcessor {
         }
     }
 
-    private String objectOrResult(final Request request) {
-        final String sourceObjectId = request.getOptionalProperty(OBJECT);
+    private String objectOrResult(final TagProcessor tagProcessor) {
+        final String sourceObjectId = tagProcessor.getOptionalProperty(OBJECT);
         if (sourceObjectId == null) {
-            return (String) request.getContext().getVariable(RequestContext.RESULT);
+            return (String) tagProcessor.getContext().getVariable(Names.RESULT);
         } else {
             return sourceObjectId;
         }
     }
 
-    private void disallowSourceAndDefault(final Request request) {
-        if (request.getOptionalProperty(DEFAULT) != null && request.getOptionalProperty(OBJECT) != null) {
+    private void disallowSourceAndDefault(final TagProcessor tagProcessor) {
+        if (tagProcessor.getOptionalProperty(DEFAULT) != null && tagProcessor.getOptionalProperty(OBJECT) != null) {
             throw new ScimpiException("Cannot specify both " + OBJECT + " and " + DEFAULT + " for the " + getName() + " element");
         }
     }
