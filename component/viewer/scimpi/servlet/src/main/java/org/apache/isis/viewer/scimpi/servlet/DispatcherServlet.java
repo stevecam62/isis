@@ -29,9 +29,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.viewer.scimpi.dispatcher.Dispatcher;
-import org.apache.isis.viewer.scimpi.dispatcher.Response;
-import org.apache.isis.viewer.scimpi.security.DebugUsers;
-import org.apache.isis.viewer.scimpi.security.UserManager;
+import org.apache.isis.viewer.scimpi.dispatcher.context.DebugUsers;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Response;
+import org.apache.isis.viewer.scimpi.dispatcher.util.UserManager;
 import org.apache.log4j.Logger;
 
 public class DispatcherServlet extends HttpServlet {

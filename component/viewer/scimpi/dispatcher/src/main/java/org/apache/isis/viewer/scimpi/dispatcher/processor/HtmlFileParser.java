@@ -38,9 +38,9 @@ import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
 
 public class HtmlFileParser {
     private static final Logger LOG = Logger.getLogger(HtmlFileParser.class);
-    private final ProcessorLookup processors;
+    private final ElementProcessorLookup processors;
 
-    public HtmlFileParser(final ProcessorLookup processors) {
+    public HtmlFileParser(final ElementProcessorLookup processors) {
         this.processors = processors;
     }
 
@@ -90,7 +90,7 @@ public class HtmlFileParser {
                     // TODO remove context & request from Attributes -- the tags
                     // will be re-used across
                     // requests
-                    final Attributes attributes = new Attributes(tagNode, context);
+                    final TagAttributes tagAttributes = new TagAttributes(tagNode, context);
                     int type = 0;
                     if (tagNode.isEndTag()) {
                         type = SwfTag.END;
@@ -99,7 +99,7 @@ public class HtmlFileParser {
                     }
                     testForProcessorForTag(lexer, tagName);
                     lineNumbers = lineNumbering(node);
-                    final SwfTag tag = new SwfTag(tagName, attributes, type, lineNumbers, loadFile.getCanonicalPath());
+                    final SwfTag tag = new SwfTag(tagName, tagAttributes, type, lineNumbers, loadFile.getCanonicalPath());
                     tags.push(tag);
 
                     if (tagName.equals("SWF:IMPORT")) {

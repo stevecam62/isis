@@ -38,6 +38,7 @@ import org.apache.isis.viewer.scimpi.Names;
 import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
 
 public class MethodsUtils {
     public static final String SERVICE_PREFIX = "service:";
@@ -103,7 +104,7 @@ public class MethodsUtils {
         return null;
     }
 
-    public static ObjectAdapter findObject(final Request context, String objectId) {
+    public static ObjectAdapter findObject(final RequestState context, String objectId) {
         if (objectId == null) {
             objectId = context.getStringVariable(Names.RESULT);
         }

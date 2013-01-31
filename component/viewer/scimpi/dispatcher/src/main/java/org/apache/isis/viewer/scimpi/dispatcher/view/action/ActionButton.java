@@ -32,8 +32,9 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectActionParameter;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.viewer.scimpi.Names;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.other.HelpLink;
@@ -49,28 +50,28 @@ public class ActionButton extends AbstractElementProcessor {
     private final static Where where = Where.ANYWHERE;
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        final String objectId = tagProcessor.getOptionalProperty(OBJECT);
-        final String methodName = tagProcessor.getRequiredProperty(METHOD);
-        final String forwardResultTo = tagProcessor.getOptionalProperty(VIEW);
-        final String forwardVoidTo = tagProcessor.getOptionalProperty(VOID);
-        final String forwardErrorTo = tagProcessor.getOptionalProperty(ERROR);
-        final String variable = tagProcessor.getOptionalProperty(RESULT_NAME);
-        final String scope = tagProcessor.getOptionalProperty(SCOPE);
-        final String buttonTitle = tagProcessor.getOptionalProperty(BUTTON_TITLE);
-        String resultOverride = tagProcessor.getOptionalProperty(RESULT_OVERRIDE);
-        final String idName = tagProcessor.getOptionalProperty(ID, methodName);
-        final String className = tagProcessor.getOptionalProperty(CLASS);
-        final boolean showMessage = tagProcessor.isRequested(SHOW_MESSAGE, false);
-        final String completionMessage = tagProcessor.getOptionalProperty(MESSAGE);
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        final String objectId = templateProcessor.getOptionalProperty(OBJECT);
+        final String methodName = templateProcessor.getRequiredProperty(METHOD);
+        final String forwardResultTo = templateProcessor.getOptionalProperty(VIEW);
+        final String forwardVoidTo = templateProcessor.getOptionalProperty(VOID);
+        final String forwardErrorTo = templateProcessor.getOptionalProperty(ERROR);
+        final String variable = templateProcessor.getOptionalProperty(RESULT_NAME);
+        final String scope = templateProcessor.getOptionalProperty(SCOPE);
+        final String buttonTitle = templateProcessor.getOptionalProperty(BUTTON_TITLE);
+        String resultOverride = templateProcessor.getOptionalProperty(RESULT_OVERRIDE);
+        final String idName = templateProcessor.getOptionalProperty(ID, methodName);
+        final String className = templateProcessor.getOptionalProperty(CLASS);
+        final boolean showMessage = templateProcessor.isRequested(SHOW_MESSAGE, false);
+        final String completionMessage = templateProcessor.getOptionalProperty(MESSAGE);
 
-        final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), objectId);
-        final String version = tagProcessor.getContext().mapVersion(object);
+        final ObjectAdapter object = MethodsUtils.findObject(templateProcessor.getContext(), objectId);
+        final String version = templateProcessor.getContext().mapVersion(object);
         final ObjectAction action = MethodsUtils.findAction(object, methodName);
 
         final ActionContent parameterBlock = new ActionContent(action);
-        tagProcessor.setBlockContent(parameterBlock);
-        tagProcessor.processUtilCloseTag();
+        templateProcessor.pushBlock(parameterBlock);
+        templateProcessor.processUtilCloseTag();
         final String[] parameters = parameterBlock.getParameters();
         final ObjectAdapter[] objectParameters;
         
@@ -78,7 +79,7 @@ public class ActionButton extends AbstractElementProcessor {
         if (action.isContributed()) {
             objectParameters= null;
             System.arraycopy(parameters, 0, parameters, 1, parameters.length - 1);
-            parameters[0] = tagProcessor.getContext().mapObject(object, Scope.REQUEST);
+            parameters[0] = templateProcessor.getContext().mapObject(object, Scope.REQUEST);
             target =  action.realTarget(object);
             if (!action.hasReturn() && resultOverride == null) {
                 resultOverride = parameters[0];
@@ -96,7 +97,7 @@ public class ActionButton extends AbstractElementProcessor {
                     Localization localization = IsisContext.getLocalization(); 
                     objectParameters[i] = facet.parseTextEntry(null, parameters[i], localization); 
                 } else {
-                    objectParameters[i] = MethodsUtils.findObject(tagProcessor.getContext(), parameters[i]);
+                    objectParameters[i] = MethodsUtils.findObject(templateProcessor.getContext(), parameters[i]);
                 }
                 i++;
             }
@@ -104,7 +105,7 @@ public class ActionButton extends AbstractElementProcessor {
 
         if (MethodsUtils.isVisibleAndUsable(object, action, where) && MethodsUtils.canRunMethod(object, action, objectParameters).isAllowed()) {
             // TODO use the form creation mechanism as used in ActionForm
-            write(tagProcessor, target, action, parameters, objectId, version, forwardResultTo, forwardVoidTo, forwardErrorTo, variable, scope, buttonTitle, completionMessage, resultOverride, idName, className);
+            write(templateProcessor, target, action, parameters, objectId, version, forwardResultTo, forwardVoidTo, forwardErrorTo, variable, scope, buttonTitle, completionMessage, resultOverride, idName, className);
         }
 
         if (showMessage) {
@@ -113,35 +114,35 @@ public class ActionButton extends AbstractElementProcessor {
                 final String notUsable = usable.getReason();
                 if (notUsable != null) {
                     String title = buttonTitle == null ? action.getName() : buttonTitle;
-                    disabledButton(tagProcessor, title, notUsable, idName, className);
+                    disabledButton(templateProcessor, title, notUsable, idName, className);
                 }
             } else {
                 final Consent valid = action.isProposedArgumentSetValid(object, objectParameters);
                 final String notValid = valid.getReason();
                 if (notValid != null) {
                     String title = buttonTitle == null ? action.getName() : buttonTitle;
-                    disabledButton(tagProcessor, title, notValid, idName, className);
+                    disabledButton(templateProcessor, title, notValid, idName, className);
                 }
             }
         }
 
-        tagProcessor.popBlockContent();
+        templateProcessor.popBlock();
     }
 
-    private void disabledButton(final TagProcessor tagProcessor, final String buttonTitle, String message, String id, String className) {
+    private void disabledButton(final TemplateProcessor templateProcessor, final String buttonTitle, String message, String id, String className) {
         if (className == null) {
             className = "access";
         }
-        tagProcessor.appendHtml("<div id=\"" + id + "\" class=\"" + className + " disabled-form\">");
-        tagProcessor.appendHtml("<div class=\"button disabled\" title=\"");
-        tagProcessor.appendAsHtmlEncoded(message);
-        tagProcessor.appendHtml("\" >" + buttonTitle);
-        tagProcessor.appendHtml("</div>");
-        tagProcessor.appendHtml("</div>");
+        templateProcessor.appendHtml("<div id=\"" + id + "\" class=\"" + className + " disabled-form\">");
+        templateProcessor.appendHtml("<div class=\"button disabled\" title=\"");
+        templateProcessor.appendAsHtmlEncoded(message);
+        templateProcessor.appendHtml("\" >" + buttonTitle);
+        templateProcessor.appendHtml("</div>");
+        templateProcessor.appendHtml("</div>");
     }
 
     public static void write(
-            final TagProcessor tagProcessor,
+            final TemplateProcessor templateProcessor,
             final ObjectAdapter object,
             final ObjectAction action,
             final String[] parameters,
@@ -157,7 +158,7 @@ public class ActionButton extends AbstractElementProcessor {
             final String resultOverride,
             final String idName,
             final String className) {
-        final Request context = tagProcessor.getContext();
+        final Request context = templateProcessor.getContext();
 
         buttonTitle = buttonTitle != null ? buttonTitle : action.getName();
 
@@ -184,48 +185,48 @@ public class ActionButton extends AbstractElementProcessor {
 
         final String idSegment = idName == null ? "" : ("id=\"" + idName + "\" ");
         final String classSegment = "class=\"" + (className == null ? "action in-line" : className) + "\"";
-        tagProcessor.appendHtml("\n<form " + idSegment + classSegment + " action=\"action.app\" method=\"post\">\n");
+        templateProcessor.appendHtml("\n<form " + idSegment + classSegment + " action=\"action.app\" method=\"post\">\n");
         if (objectId == null) {
-            tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + OBJECT + "\" value=\"" + context.getVariable(Names.RESULT) + "\" />\n");
+            templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + OBJECT + "\" value=\"" + context.getVariable(Names.RESULT) + "\" />\n");
         } else {
-            tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + OBJECT + "\" value=\"" + objectId + "\" />\n");
+            templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + OBJECT + "\" value=\"" + objectId + "\" />\n");
         }
-        tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + VERSION + "\" value=\"" + version + "\" />\n");
+        templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + VERSION + "\" value=\"" + version + "\" />\n");
         if (scope != null) {
-            tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + SCOPE + "\" value=\"" + scope + "\" />\n");
+            templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + SCOPE + "\" value=\"" + scope + "\" />\n");
         }
-        tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + METHOD + "\" value=\"" + action.getId() + "\" />\n");
+        templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + METHOD + "\" value=\"" + action.getId() + "\" />\n");
         if (forwardResultTo != null) {
             forwardResultTo = context.fullFilePath(forwardResultTo);
-            tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + VIEW + "\" value=\"" + forwardResultTo + "\" />\n");
+            templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + VIEW + "\" value=\"" + forwardResultTo + "\" />\n");
         }
         if (forwardErrorTo == null) {
-            forwardErrorTo = tagProcessor.getContext().getResourceFile();
+            forwardErrorTo = templateProcessor.getContext().getResourceFile();
         }
         forwardErrorTo = context.fullFilePath(forwardErrorTo);
-        tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + ERROR + "\" value=\"" + forwardErrorTo + "\" />\n");
+        templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + ERROR + "\" value=\"" + forwardErrorTo + "\" />\n");
         if (forwardVoidTo == null) {
-            forwardVoidTo = tagProcessor.getContext().getResourceFile();
+            forwardVoidTo = templateProcessor.getContext().getResourceFile();
         }
         forwardVoidTo = context.fullFilePath(forwardVoidTo);
-        tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + VOID + "\" value=\"" + forwardVoidTo + "\" />\n");
+        templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + VOID + "\" value=\"" + forwardVoidTo + "\" />\n");
         if (variable != null) {
-            tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + RESULT_NAME + "\" value=\"" + variable + "\" />\n");
+            templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + RESULT_NAME + "\" value=\"" + variable + "\" />\n");
         }
         if (resultOverride != null) {
-            tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + RESULT_OVERRIDE + "\" value=\"" + resultOverride + "\" />\n");
+            templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + RESULT_OVERRIDE + "\" value=\"" + resultOverride + "\" />\n");
         }
         if (completionMessage != null) {
-            tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + MESSAGE + "\" value=\"" + completionMessage + "\" />\n");
+            templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + "_" + MESSAGE + "\" value=\"" + completionMessage + "\" />\n");
         }
 
         for (int i = 0; i < parameters.length; i++) {
-            tagProcessor.appendHtml("  <input type=\"hidden\" name=\"param" + (i + 1) + "\" value=\"" + parameters[i] + "\" />\n");
+            templateProcessor.appendHtml("  <input type=\"hidden\" name=\"param" + (i + 1) + "\" value=\"" + parameters[i] + "\" />\n");
         }
-        tagProcessor.appendHtml(tagProcessor.getContext().interactionFields());
-        tagProcessor.appendHtml("  <input class=\"button\" type=\"submit\" value=\"" + buttonTitle + "\" name=\"execute\" title=\"" + action.getDescription() + "\" />");
-        HelpLink.append(tagProcessor, action.getDescription(), action.getHelp());
-        tagProcessor.appendHtml("\n</form>\n");
+        templateProcessor.appendHtml(templateProcessor.getContext().interactionFields());
+        templateProcessor.appendHtml("  <input class=\"button\" type=\"submit\" value=\"" + buttonTitle + "\" name=\"execute\" title=\"" + action.getDescription() + "\" />");
+        HelpLink.append(templateProcessor, action.getDescription(), action.getHelp());
+        templateProcessor.appendHtml("\n</form>\n");
     }
 
     @Override

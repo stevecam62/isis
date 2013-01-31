@@ -24,53 +24,54 @@ import org.apache.isis.core.commons.debug.DebugHtmlString;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.viewer.scimpi.Names;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Diagnostics extends AbstractElementProcessor {
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        if (tagProcessor.getContext().isDebugDisabled()) {
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        if (templateProcessor.getContext().isDebugDisabled()) {
             return;
         }
 
-        final String type = tagProcessor.getOptionalProperty(TYPE, "page");
-        final boolean isForced = tagProcessor.isRequested("force");
-        if (isForced || tagProcessor.getContext().showDebugData()) {
-            tagProcessor.appendHtml("<div class=\"debug\">");
+        final String type = templateProcessor.getOptionalProperty(TYPE, "page");
+        final boolean isForced = templateProcessor.isRequested("force");
+        if (isForced || templateProcessor.getContext().showDebugData()) {
+            templateProcessor.appendHtml("<div class=\"debug\">");
             if ("page".equals(type)) {
-                tagProcessor.appendHtml("<pre>");
-                final Request context = tagProcessor.getContext();
-                tagProcessor.appendHtml("URI:  " + context.getUri());
-                tagProcessor.appendHtml("\n");
-                tagProcessor.appendHtml("File: " + context.fullFilePath(context.getResourceFile()));
-                final String result = (String) tagProcessor.getContext().getVariable(Names.RESULT);
+                templateProcessor.appendHtml("<pre>");
+                final Request context = templateProcessor.getContext();
+                templateProcessor.appendHtml("URI:  " + context.getUri());
+                templateProcessor.appendHtml("\n");
+                templateProcessor.appendHtml("File: " + context.fullFilePath(context.getResourceFile()));
+                final String result = (String) templateProcessor.getContext().getVariable(Names.RESULT);
                 if (result != null) {
-                    tagProcessor.appendHtml("\n");
-                    tagProcessor.appendHtml("Object: " + result);
+                    templateProcessor.appendHtml("\n");
+                    templateProcessor.appendHtml("Object: " + result);
                 }
-                tagProcessor.appendHtml("</pre>");
+                templateProcessor.appendHtml("</pre>");
             } else if ("session".equals(type)) {
-                tagProcessor.appendHtml("<pre>");
+                templateProcessor.appendHtml("<pre>");
                 final AuthenticationSession session = IsisContext.getAuthenticationSession();
-                tagProcessor.appendHtml("Session:  " + session.getUserName() + " " + session.getRoles());
-                tagProcessor.appendHtml("</pre>");
+                templateProcessor.appendHtml("Session:  " + session.getUserName() + " " + session.getRoles());
+                templateProcessor.appendHtml("</pre>");
             } else if ("variables".equals(type)) {
-                final Request context = tagProcessor.getContext();
+                final Request context = templateProcessor.getContext();
                 final DebugHtmlString debug = new DebugHtmlString();
                 debug.appendln("", "");
                 context.append(debug, "variables");
                 debug.close();
-                tagProcessor.appendHtml(debug.toString());
+                templateProcessor.appendHtml(debug.toString());
             } else if ("processing".equals(type)) {
-                tagProcessor.appendHtml("<pre>");
-                tagProcessor.appendHtml(tagProcessor.getContext().getDebugTrace());
-                tagProcessor.appendHtml("</pre>");
+                templateProcessor.appendHtml("<pre>");
+                templateProcessor.appendHtml(templateProcessor.getContext().getDebugTrace());
+                templateProcessor.appendHtml("</pre>");
             } else {
-                tagProcessor.appendHtml("<i>No such type " + type + "</i>");
+                templateProcessor.appendHtml("<i>No such type " + type + "</i>");
             }
-            tagProcessor.appendHtml("</div>");
+            templateProcessor.appendHtml("</div>");
         }
     }
 

@@ -27,52 +27,53 @@ import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.ObjectSpecification;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 
 public class Specification extends AbstractElementProcessor {
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        final Request context = tagProcessor.getContext();
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        final Request context = templateProcessor.getContext();
         if (context.isDebugDisabled()) {
             return;
         }
 
-        if (tagProcessor.isRequested("always") || context.getDebug() == Request.Debug.ON) {
-            tagProcessor.appendHtml("<div class=\"debug\">");
-            tagProcessor.appendHtml("<pre>");
+        if (templateProcessor.isRequested("always") || context.getDebug() == Request.Debug.ON) {
+            templateProcessor.appendHtml("<div class=\"debug\">");
+            templateProcessor.appendHtml("<pre>");
 
-            final String id = tagProcessor.getOptionalProperty("object");
+            final String id = templateProcessor.getOptionalProperty("object");
             final ObjectAdapter object = context.getMappedObjectOrResult(id);
             final ObjectSpecification specification = object.getSpecification();
-            String type = tagProcessor.getOptionalProperty(TYPE, "details");
+            String type = templateProcessor.getOptionalProperty(TYPE, "details");
 
             if (type.equals("graph")) {
-                specificationGraph(tagProcessor, specification, null, new ArrayList<ObjectSpecification>(), 0);
+                specificationGraph(templateProcessor, specification, null, new ArrayList<ObjectSpecification>(), 0);
             } else if (type.equals("details")) {
-                specificationDetails(tagProcessor, specification);
+                specificationDetails(templateProcessor, specification);
             } else {
-                tagProcessor.appendHtml("invalid type: " + type);
+                templateProcessor.appendHtml("invalid type: " + type);
             }
 
-            tagProcessor.appendHtml("</pre>");
-            tagProcessor.appendHtml("</div>");
+            templateProcessor.appendHtml("</pre>");
+            templateProcessor.appendHtml("</div>");
         }
     }
 
-    private void specificationDetails(final TagProcessor tagProcessor, final ObjectSpecification specification) {
-        renderName(tagProcessor, specification);
+    private void specificationDetails(final TemplateProcessor templateProcessor, final ObjectSpecification specification) {
+        renderName(templateProcessor, specification);
         final List<ObjectAssociation> fields = specification.getAssociations();
         for (int i = 0; i < fields.size(); i++) {
-            tagProcessor.appendHtml("    " + fields.get(i).getName() + " (" + fields.get(i).getSpecification().getSingularName()
+            templateProcessor.appendHtml("    " + fields.get(i).getName() + " (" + fields.get(i).getSpecification().getSingularName()
                     + ") \n");
         }
     }
 
     private void specificationGraph(
-            TagProcessor tagProcessor,
+            TemplateProcessor templateProcessor,
             ObjectSpecification specification,
             String fieldName,
             List<ObjectSpecification> processed,
@@ -81,15 +82,15 @@ public class Specification extends AbstractElementProcessor {
             return;
         }
 
-        tagProcessor.appendHtml(StringUtils.repeat("    ", level));
+        templateProcessor.appendHtml(StringUtils.repeat("    ", level));
         if (processed.contains(specification)) {
-            tagProcessor.appendHtml("* ");
+            templateProcessor.appendHtml("* ");
         }
-        tagProcessor.appendHtml(specification.getFullIdentifier());
+        templateProcessor.appendHtml(specification.getFullIdentifier());
         if (fieldName != null) {
-            tagProcessor.appendHtml(" (" + fieldName + ")");
+            templateProcessor.appendHtml(" (" + fieldName + ")");
         }
-        tagProcessor.appendHtml("\n");
+        templateProcessor.appendHtml("\n");
 
         if (processed.contains(specification)) {
             return;
@@ -102,12 +103,12 @@ public class Specification extends AbstractElementProcessor {
             if (fieldSpecification.isValue()) {
                 continue;
             }
-            specificationGraph(tagProcessor, fieldSpecification, fields.get(i).getName(), processed, level + 1);
+            specificationGraph(templateProcessor, fieldSpecification, fields.get(i).getName(), processed, level + 1);
         }
     }
 
-    private void renderName(final TagProcessor tagProcessor, final ObjectSpecification specification) {
-        tagProcessor.appendHtml(specification.getSingularName() + " (" + specification.getFullIdentifier() + ") \n");
+    private void renderName(final TemplateProcessor templateProcessor, final ObjectSpecification specification) {
+        templateProcessor.appendHtml(specification.getSingularName() + " (" + specification.getFullIdentifier() + ") \n");
     }
 
     @Override

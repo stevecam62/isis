@@ -19,20 +19,21 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.debug;
 
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 import org.apache.log4j.Logger;
 
 public class Log extends AbstractElementProcessor {
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        String name = tagProcessor.getRequiredProperty(NAME);
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        String name = templateProcessor.getRequiredProperty(NAME);
         Logger logger = Logger.getLogger(name);
         
-        tagProcessor.pushNewBuffer();
-        tagProcessor.processUtilCloseTag();
-        final String message = tagProcessor.popBuffer();
+        templateProcessor.pushNewBuffer();
+        templateProcessor.processUtilCloseTag();
+        final String message = templateProcessor.popBuffer();
         logger.info(message);
     }
 

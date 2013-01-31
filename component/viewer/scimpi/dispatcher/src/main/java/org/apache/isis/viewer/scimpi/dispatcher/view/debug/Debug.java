@@ -44,7 +44,8 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectMember;
 import org.apache.isis.core.metamodel.util.Dump;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Debug extends AbstractElementProcessor {
@@ -56,19 +57,19 @@ public class Debug extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        if (tagProcessor.getContext().isDebugDisabled()) {
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        if (templateProcessor.getContext().isDebugDisabled()) {
             return;
         }
         
-        final String type = tagProcessor.getOptionalProperty(TYPE);
+        final String type = templateProcessor.getOptionalProperty(TYPE);
 
-        final boolean alwaysShow = tagProcessor.isRequested("force", false);
+        final boolean alwaysShow = templateProcessor.isRequested("force", false);
         if (type != null) {
             if (type.equals("system")) {
-                displaySystem(tagProcessor);
+                displaySystem(templateProcessor);
             } else if (type.equals("session")) {
-                displaySession(tagProcessor);
+                displaySession(templateProcessor);
             } else if (type.equals("test")) {
                 final DebugBuilder debug = new DebugHtmlString();
                 debug.appendTitle("Title");
@@ -106,153 +107,153 @@ public class Debug extends AbstractElementProcessor {
                 debug.appendln("A lot of text etc.");
                 debug.endSection();
 
-                tagProcessor.appendHtml(debug.toString());
+                templateProcessor.appendHtml(debug.toString());
                 //request.appendHtml("<pre>" + debug.toString() + "</pre>");
                 
                 debug.close();
                 
             } else if (type.equals("variables")) {
-                displayVariables(tagProcessor);
+                displayVariables(templateProcessor);
             } else if (type.equals("dispatcher")) {
-                displayDispatcher(tagProcessor);
+                displayDispatcher(templateProcessor);
             } else if (type.equals("context")) {
-                displayContext(tagProcessor);
+                displayContext(templateProcessor);
             } else if (type.equals("specifications")) {
-                listSpecifications(tagProcessor);
+                listSpecifications(templateProcessor);
             } else if (type.equals("specification-for")) {
-                specificationFor(tagProcessor);
+                specificationFor(templateProcessor);
             } else if (type.equals("specification")) {
-                specification(tagProcessor);
+                specification(templateProcessor);
             } else if (type.equals("specification-graph")) {
-                specificationGraph(tagProcessor);
+                specificationGraph(templateProcessor);
             } else if (type.equals("object-graph")) {
-                objectGraph(tagProcessor);
+                objectGraph(templateProcessor);
 
             } else if (type.equals("object")) {
-                final String value = tagProcessor.getOptionalProperty(VALUE);
-                final Request context = tagProcessor.getContext();
+                final String value = templateProcessor.getOptionalProperty(VALUE);
+                final Request context = templateProcessor.getContext();
                 final ObjectAdapter object = context.getMappedObject(value);
                 final DebugString str = new DebugString();
                 Dump.adapter(object, str);
                 Dump.graph(object, IsisContext.getAuthenticationSession(), str);
-                tagProcessor.appendHtml("<h2>" + object.getSpecification().getFullIdentifier() + "</h2>");
-                tagProcessor.appendHtml("<pre class=\"debug\">" + str + "</pre>");
+                templateProcessor.appendHtml("<h2>" + object.getSpecification().getFullIdentifier() + "</h2>");
+                templateProcessor.appendHtml("<pre class=\"debug\">" + str + "</pre>");
             }
 
         }
 
-        if (alwaysShow || tagProcessor.getContext().getDebug() == Request.Debug.ON) {
+        if (alwaysShow || templateProcessor.getContext().getDebug() == Request.Debug.ON) {
 
-            final Request context = tagProcessor.getContext();
+            final Request context = templateProcessor.getContext();
 
-            final String id = tagProcessor.getOptionalProperty("object");
+            final String id = templateProcessor.getOptionalProperty("object");
             if (id != null) {
                 final ObjectAdapter object = context.getMappedObject(id);
                 if (object instanceof DebuggableWithTitle) {
                     final DebugString debug = new DebugString();
                     ((DebuggableWithTitle) object).debugData(debug);
-                    tagProcessor.appendHtml("<pre class=\"debug\">" + debug + "</pre>");
+                    templateProcessor.appendHtml("<pre class=\"debug\">" + debug + "</pre>");
                 } else {
-                    tagProcessor.appendHtml(object.toString());
+                    templateProcessor.appendHtml(object.toString());
                 }
             }
 
-            final String variable = tagProcessor.getOptionalProperty("variable");
+            final String variable = templateProcessor.getOptionalProperty("variable");
             if (variable != null) {
                 final Object object = context.getVariable(variable);
-                tagProcessor.appendHtml(variable + " => " + (object == null ? "null" : object.toString()));
+                templateProcessor.appendHtml(variable + " => " + (object == null ? "null" : object.toString()));
             }
 
-            final String list = tagProcessor.getOptionalProperty("list");
+            final String list = templateProcessor.getOptionalProperty("list");
             if (list != null) {
                 final DebugString debug = new DebugString();
                 context.append(debug, list);
-                tagProcessor.appendHtml(debug.toString());
+                templateProcessor.appendHtml(debug.toString());
             }
 
-            final String uri = tagProcessor.getOptionalProperty("uri");
+            final String uri = templateProcessor.getOptionalProperty("uri");
             if (uri != null) {
-                tagProcessor.appendHtml("<pre class=\"debug\">");
-                tagProcessor.appendHtml(context.getUri());
-                tagProcessor.appendHtml("</pre>");
+                templateProcessor.appendHtml("<pre class=\"debug\">");
+                templateProcessor.appendHtml(context.getUri());
+                templateProcessor.appendHtml("</pre>");
             }
 
         }
     }
 
-    protected void objectGraph(final TagProcessor tagProcessor) {
-        final String id = tagProcessor.getOptionalProperty(VALUE);
-        final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
-        tagProcessor.appendHtml("<h1>Object Graph - " + object + "</h1>");
-        tagProcessor.appendHtml("<pre>");
+    protected void objectGraph(final TemplateProcessor templateProcessor) {
+        final String id = templateProcessor.getOptionalProperty(VALUE);
+        final ObjectAdapter object = templateProcessor.getContext().getMappedObjectOrResult(id);
+        templateProcessor.appendHtml("<h1>Object Graph - " + object + "</h1>");
+        templateProcessor.appendHtml("<pre>");
         final DebugBuilder debug = new DebugString();
         Dump.graph(object, null, debug);
-        tagProcessor.appendHtml(debug.toString());
-        tagProcessor.appendHtml("</pre>");
+        templateProcessor.appendHtml(debug.toString());
+        templateProcessor.appendHtml("</pre>");
     }
 
-    protected void specificationFor(final TagProcessor tagProcessor) {
-        final String id = tagProcessor.getOptionalProperty(VALUE);
-        final ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
-        specification(tagProcessor, object.getSpecification());
+    protected void specificationFor(final TemplateProcessor templateProcessor) {
+        final String id = templateProcessor.getOptionalProperty(VALUE);
+        final ObjectAdapter object = templateProcessor.getContext().getMappedObjectOrResult(id);
+        specification(templateProcessor, object.getSpecification());
     }
 
-    protected void specification(final TagProcessor tagProcessor) {
-        final String name = tagProcessor.getOptionalProperty(VALUE);
+    protected void specification(final TemplateProcessor templateProcessor) {
+        final String name = templateProcessor.getOptionalProperty(VALUE);
         final ObjectSpecification spec = getSpecificationLoader().loadSpecification(name);
-        specification(tagProcessor, spec);
+        specification(templateProcessor, spec);
     }
 
-    private void specification(final TagProcessor tagProcessor, final ObjectSpecification spec) {
-        tagProcessor.appendHtml("<h1>Specification - " + spec.getFullIdentifier() + "</h1>");
-        tagProcessor.appendHtml("<p><a href=\"./debug.shtml?type=specification-graph&value=" + spec.getFullIdentifier() + "\">Specification Graph</a></p>");
+    private void specification(final TemplateProcessor templateProcessor, final ObjectSpecification spec) {
+        templateProcessor.appendHtml("<h1>Specification - " + spec.getFullIdentifier() + "</h1>");
+        templateProcessor.appendHtml("<p><a href=\"./debug.shtml?type=specification-graph&value=" + spec.getFullIdentifier() + "\">Specification Graph</a></p>");
         final DebugBuilder debug = new DebugHtmlString();
         specification(spec, debug);
-        tagProcessor.appendHtml(debug.toString());
+        templateProcessor.appendHtml(debug.toString());
     }
 
-    protected void specificationGraph(final TagProcessor tagProcessor) {
-        final String name = tagProcessor.getOptionalProperty(VALUE);
+    protected void specificationGraph(final TemplateProcessor templateProcessor) {
+        final String name = templateProcessor.getOptionalProperty(VALUE);
         final ObjectSpecification spec = getSpecificationLoader().loadSpecification(name);
-        tagProcessor.appendHtml("<h1>Specification Graph - " + spec.getFullIdentifier() + "</h1>");
-        tagProcessor.appendHtml("<p><a href=\"./debug.shtml?type=specification&value=" + spec.getFullIdentifier() + "\">Full Specification</a></p>");
-        tagProcessor.appendHtml("<pre>");
+        templateProcessor.appendHtml("<h1>Specification Graph - " + spec.getFullIdentifier() + "</h1>");
+        templateProcessor.appendHtml("<p><a href=\"./debug.shtml?type=specification&value=" + spec.getFullIdentifier() + "\">Full Specification</a></p>");
+        templateProcessor.appendHtml("<pre>");
         final DebugBuilder debug = new DebugString();
         debug.appendln(spec.getFullIdentifier());
         debug.indent();
         specificationGraph(spec, debug, new ArrayList<ObjectSpecification>());
         debug.unindent();
-        tagProcessor.appendHtml(debug.toString());
-        tagProcessor.appendHtml("</pre>");
+        templateProcessor.appendHtml(debug.toString());
+        templateProcessor.appendHtml("</pre>");
     }
 
-    private void displayContext(final TagProcessor tagProcessor) {
-        tagProcessor.appendHtml("<h1>Context</h1>");
+    private void displayContext(final TemplateProcessor templateProcessor) {
+        templateProcessor.appendHtml("<h1>Context</h1>");
         final DebugHtmlString debugString = new DebugHtmlString();
-        tagProcessor.getContext().append(debugString);
+        templateProcessor.getContext().append(debugString);
         debugString.close();
-        tagProcessor.appendHtml(debugString.toString());
+        templateProcessor.appendHtml(debugString.toString());
     }
 
-    private void displayDispatcher(final TagProcessor tagProcessor) {
-        tagProcessor.appendHtml("<h1>Dispatcher</h1>");
+    private void displayDispatcher(final TemplateProcessor templateProcessor) {
+        templateProcessor.appendHtml("<h1>Dispatcher</h1>");
         final DebugHtmlString debugString = new DebugHtmlString();
         dispatcher.debugData(debugString);
         debugString.close();
-        tagProcessor.appendHtml(debugString.toString());
+        templateProcessor.appendHtml(debugString.toString());
     }
 
-    protected void displayVariables(final TagProcessor tagProcessor) {
-        tagProcessor.appendHtml("<h1>Variables</h1>");
+    protected void displayVariables(final TemplateProcessor templateProcessor) {
+        templateProcessor.appendHtml("<h1>Variables</h1>");
         final DebugHtmlString debug = new DebugHtmlString();
-        final Request context = tagProcessor.getContext();
+        final Request context = templateProcessor.getContext();
         context.append(debug, "variables");
         debug.close();
-        tagProcessor.appendHtml(debug.toString());
+        templateProcessor.appendHtml(debug.toString());
     }
 
-    protected void displaySystem(final TagProcessor tagProcessor) {
-        tagProcessor.appendHtml("<h1>System</h1>");
+    protected void displaySystem(final TemplateProcessor templateProcessor) {
+        templateProcessor.appendHtml("<h1>System</h1>");
         final DebuggableWithTitle[] debugItems = IsisContext.debugSystem();
         for (final DebuggableWithTitle debug : debugItems) {
             final DebugHtmlString debugBuffer = new DebugHtmlString();
@@ -260,12 +261,12 @@ public class Debug extends AbstractElementProcessor {
             debug.debugData(debugBuffer);
             debugBuffer.endSection();
             debugBuffer.close();
-            tagProcessor.appendHtml(debugBuffer.toString());
+            templateProcessor.appendHtml(debugBuffer.toString());
         }
     }
 
-    protected void displaySession(final TagProcessor tagProcessor) {
-        tagProcessor.appendHtml("<h1>Session</h1>");
+    protected void displaySession(final TemplateProcessor templateProcessor) {
+        templateProcessor.appendHtml("<h1>Session</h1>");
         final DebuggableWithTitle[] debugItems = IsisContext.debugSession();
         for (final DebuggableWithTitle debug : debugItems) {
             final DebugHtmlString debugBuffer = new DebugHtmlString();
@@ -273,12 +274,12 @@ public class Debug extends AbstractElementProcessor {
             debug.debugData(debugBuffer);
             debugBuffer.endSection();
             debugBuffer.close();
-            tagProcessor.appendHtml(debugBuffer.toString());
+            templateProcessor.appendHtml(debugBuffer.toString());
         }
     }
 
-    protected void listSpecifications(final TagProcessor tagProcessor) {
-        tagProcessor.appendHtml("<h1>Specifications</h1>");
+    protected void listSpecifications(final TemplateProcessor templateProcessor) {
+        templateProcessor.appendHtml("<h1>Specifications</h1>");
         final List<ObjectSpecification> fullIdentifierList = new ArrayList<ObjectSpecification>(getSpecificationLoader().allSpecifications());
         Collections.sort(fullIdentifierList, ObjectSpecification.COMPARATOR_SHORT_IDENTIFIER_IGNORE_CASE);
         final DebugHtmlString debug = new DebugHtmlString();
@@ -287,7 +288,7 @@ public class Debug extends AbstractElementProcessor {
             debug.appendln(name, specificationLink(spec));
         }
         debug.close();
-        tagProcessor.appendHtml(debug.toString());
+        templateProcessor.appendHtml(debug.toString());
     }
 
     private String specificationLink(final ObjectSpecification specification) {

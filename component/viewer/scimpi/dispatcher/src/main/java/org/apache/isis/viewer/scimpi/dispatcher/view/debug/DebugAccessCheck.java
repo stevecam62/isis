@@ -20,14 +20,15 @@
 package org.apache.isis.viewer.scimpi.dispatcher.view.debug;
 
 import org.apache.isis.viewer.scimpi.ForbiddenException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class DebugAccessCheck extends AbstractElementProcessor {
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        if (tagProcessor.getContext().isDebugDisabled()) {
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        if (templateProcessor.getContext().isDebugDisabled()) {
             throw new ForbiddenException("Debug is disabled");
         }
     }

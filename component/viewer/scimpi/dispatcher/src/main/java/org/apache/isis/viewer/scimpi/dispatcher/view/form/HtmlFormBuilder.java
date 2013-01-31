@@ -20,13 +20,14 @@
 package org.apache.isis.viewer.scimpi.dispatcher.view.form;
 
 import org.apache.isis.core.commons.exceptions.UnknownTypeException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.HtmlEncoder;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.other.HelpLink;
 
 public class HtmlFormBuilder {
 
     public static void createForm(
-            final TagProcessor tagProcessor,
+            final TemplateProcessor templateProcessor,
             final String action,
             final HiddenInputField[] hiddenFields,
             final InputField[] fields,
@@ -41,12 +42,12 @@ public class HtmlFormBuilder {
             final String cancelTo) {
 
         String classSegment = " class=\"" + className + (id == null ? "\"" : "\" id=\"" + id + "\"");
-        tagProcessor.appendHtml("<form " + classSegment + " action=\"" + action + "\" method=\"post\" accept-charset=\"UTF-8\">\n");
+        templateProcessor.appendHtml("<form " + classSegment + " action=\"" + action + "\" method=\"post\" accept-charset=\"UTF-8\">\n");
         if (formTitle != null && formTitle.trim().length() > 0) {
             classSegment = " class=\"title\"";
-            tagProcessor.appendHtml("<div" + classSegment + ">");
-            tagProcessor.appendAsHtmlEncoded(formTitle);
-            tagProcessor.appendHtml("</div>\n");
+            templateProcessor.appendHtml("<div" + classSegment + ">");
+            templateProcessor.appendAsHtmlEncoded(formTitle);
+            templateProcessor.appendHtml("</div>\n");
         }
 
         // TODO reinstate fieldsets when we can specify them
@@ -54,54 +55,54 @@ public class HtmlFormBuilder {
 
         final String cls = "errors";
         if (errors != null) {
-            tagProcessor.appendHtml("<div class=\"" + cls + "\">");
-            tagProcessor.appendAsHtmlEncoded(errors);
-            tagProcessor.appendHtml("</div>");
+            templateProcessor.appendHtml("<div class=\"" + cls + "\">");
+            templateProcessor.appendAsHtmlEncoded(errors);
+            templateProcessor.appendHtml("</div>");
         }
         for (final HiddenInputField hiddenField : hiddenFields) {
             if (hiddenField == null) {
                 continue;
             }
-            tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + hiddenField.getName() + "\" value=\"");
-            tagProcessor.appendAsHtmlEncoded(hiddenField.getValue());
-            tagProcessor.appendHtml("\" />\n");
+            templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + hiddenField.getName() + "\" value=\"");
+            templateProcessor.appendAsHtmlEncoded(hiddenField.getValue());
+            templateProcessor.appendHtml("\" />\n");
         }
-        tagProcessor.appendHtml(tagProcessor.getContext().interactionFields());
+        templateProcessor.appendHtml(templateProcessor.getContext().interactionFields());
         for (final InputField fld : fields) {
             if (fld.isHidden()) {
-                tagProcessor.appendHtml("  <input type=\"hidden\" name=\"" + fld.getName() + "\" value=\"");
-                tagProcessor.appendAsHtmlEncoded(fld.getValue());
-                tagProcessor.appendHtml("\" />\n");
+                templateProcessor.appendHtml("  <input type=\"hidden\" name=\"" + fld.getName() + "\" value=\"");
+                templateProcessor.appendAsHtmlEncoded(fld.getValue());
+                templateProcessor.appendHtml("\" />\n");
             } else {
                 final String errorSegment = fld.getErrorText() == null ? "" : "<span class=\"error\">" + fld.getErrorText() + "</span>";
-                final String fieldSegment = createField(fld);
+                final String fieldSegment = createField(fld, templateProcessor);
                 final String helpSegment = HelpLink.createHelpSegment(fld.getDescription(), fld.getHelpReference());
                 final String title = fld.getDescription().equals("") ? "" : " title=\"" + fld.getDescription() + "\"";
-                tagProcessor.appendHtml("  <div class=\"field " + fld.getName() + "\"><label class=\"label\" " + title + ">");
-                tagProcessor.appendAsHtmlEncoded(fld.getLabel());
-                tagProcessor.appendHtml(labelDelimiter + "</label>" + fieldSegment + errorSegment + helpSegment + "</div>\n");
+                templateProcessor.appendHtml("  <div class=\"field " + fld.getName() + "\"><label class=\"label\" " + title + ">");
+                templateProcessor.appendAsHtmlEncoded(fld.getLabel());
+                templateProcessor.appendHtml(labelDelimiter + "</label>" + fieldSegment + errorSegment + helpSegment + "</div>\n");
             }
         }
 
-        tagProcessor.appendHtml("  <input class=\"button\" type=\"submit\" value=\"");
-        tagProcessor.appendAsHtmlEncoded(buttonTitle);
-        tagProcessor.appendHtml("\" name=\"execute\" />\n");
-        HelpLink.append(tagProcessor, description, helpReference);
+        templateProcessor.appendHtml("  <input class=\"button\" type=\"submit\" value=\"");
+        templateProcessor.appendAsHtmlEncoded(buttonTitle);
+        templateProcessor.appendHtml("\" name=\"execute\" />\n");
+        HelpLink.append(templateProcessor, description, helpReference);
         // TODO alllow forms to be cancelled, returning to previous page.
         // request.appendHtml("  <div class=\"action\"><a class=\"button\" href=\"reset\">Cancel</a></div>");
 
         if (cancelTo != null) {
-            tagProcessor.appendHtml("  <input class=\"button\" type=\"button\" value=\"");
-            tagProcessor.appendAsHtmlEncoded("Cancel");
-            tagProcessor.appendHtml("\" onclick=\"window.location = '" + cancelTo + "'\" name=\"cancel\" />\n");
+            templateProcessor.appendHtml("  <input class=\"button\" type=\"button\" value=\"");
+            templateProcessor.appendAsHtmlEncoded("Cancel");
+            templateProcessor.appendHtml("\" onclick=\"window.location = '" + cancelTo + "'\" name=\"cancel\" />\n");
         }
 
         // TODO reinstate fieldsets when we can specify them
         // request.appendHtml("</fieldset>\n");
-        tagProcessor.appendHtml("</form>\n");
+        templateProcessor.appendHtml("</form>\n");
     }
 
-    private static String createField(final InputField field) {
+    private static String createField(final InputField field, final HtmlEncoder htmlEncoder) {
         if (field.isHidden()) {
             if (field.getType() == InputField.REFERENCE) {
                 return createObjectField(field, "hidden");
@@ -112,18 +113,18 @@ public class HtmlFormBuilder {
             if (field.getType() == InputField.HTML) {
                 return "<span class=\"value\">" + field.getHtml() + "</span>";
             } else if (field.getOptionsText() != null) {
-                return createOptions(field);
+                return createOptions(field, htmlEncoder);
             } else if (field.getType() == InputField.REFERENCE) {
                 return createObjectField(field, "text");
             } else if (field.getType() == InputField.CHECKBOX) {
-                return createCheckbox(field);
+                return createCheckbox(field, htmlEncoder);
             } else if (field.getType() == InputField.PASSWORD) {
-                return createPasswordField(field);
+                return createPasswordField(field, htmlEncoder);
             } else if (field.getType() == InputField.TEXT) {
                 if (field.getHeight() > 1) {
-                    return createTextArea(field);
+                    return createTextArea(field, htmlEncoder);
                 } else {
-                    return createTextField(field);
+                    return createTextField(field, htmlEncoder);
                 }
             } else {
                 throw new UnknownTypeException(field.toString());
@@ -135,7 +136,7 @@ public class HtmlFormBuilder {
         return field.getHtml();
     }
 
-    private static String createTextArea(final InputField field) {
+    private static String createTextArea(final InputField field, final HtmlEncoder htmlEncoder) {
         final String columnsSegment = field.getWidth() == 0 ? "" : " cols=\"" + field.getWidth() / field.getHeight() + "\"";
         final String rowsSegment = field.getHeight() == 0 ? "" : " rows=\"" + field.getHeight() + "\"";
         final String wrapSegment = !field.isWrapped() ? "" : " wrap=\"off\"";
@@ -143,21 +144,21 @@ public class HtmlFormBuilder {
         final String disabled = field.isEditable() ? "" : " disabled=\"disabled\"";
         final String maxLength = field.getMaxLength() == 0 ? "" : " maxlength=\"" + field.getMaxLength() + "\"";
         return "<textarea" + requiredSegment + " name=\"" + field.getName() + "\"" + columnsSegment + rowsSegment + wrapSegment
-                + maxLength + disabled + ">" + TagProcessor.getEncoder().encoder(field.getValue()) + "</textarea>";
+                + maxLength + disabled + ">" + htmlEncoder.encodeHtml(field.getValue()) + "</textarea>";
     }
 
-    private static String createPasswordField(final InputField field) {
+    private static String createPasswordField(final InputField field, final HtmlEncoder htmlEncoder) {
         final String extra = " autocomplete=\"off\"";
-        return createTextField(field, "password", extra);
+        return createTextField(field, "password", extra, htmlEncoder);
     }
 
-    private static String createTextField(final InputField field) {
-        return createTextField(field, "text", "");
+    private static String createTextField(final InputField field, final HtmlEncoder htmlEncoder) {
+        return createTextField(field, "text", "", htmlEncoder);
     }
 
-    private static String createTextField(final InputField field, final String type, final String additionalAttributes) {
+    private static String createTextField(final InputField field, final String type, final String additionalAttributes, final HtmlEncoder htmlEncoder) {
         final String value = field.getValue();
-        final String valueSegment = value == null ? "" : " value=\"" + TagProcessor.getEncoder().encoder(value) + "\"";
+        final String valueSegment = value == null ? "" : " value=\"" + htmlEncoder.encodeHtml(value) + "\"";
         final String lengthSegment = field.getWidth() == 0 ? "" : " size=\"" + field.getWidth() + "\"";
         final String maxLengthSegment = field.getMaxLength() == 0 ? "" : " maxlength=\"" + field.getMaxLength() + "\"";
         final String requiredSegment = !field.isRequired() ? "" : " required";
@@ -166,14 +167,14 @@ public class HtmlFormBuilder {
                 valueSegment + lengthSegment + maxLengthSegment + disabled + additionalAttributes + " />";
     }
 
-    private static String createCheckbox(final InputField field) {
+    private static String createCheckbox(final InputField field, final HtmlEncoder htmlEncoder) {
         final String entryText = field.getValue();
         final String valueSegment = entryText != null && entryText.toLowerCase().equals("true") ? " checked=\"checked\"" : "";
         final String disabled = field.isEditable() ? "" : " disabled=\"disabled\"";
         return "<input type=\"checkbox\" name=\"" + field.getName() + "\" value=\"true\" " + valueSegment + disabled + " />";
     }
 
-    private static String createOptions(final InputField field) {
+    private static String createOptions(final InputField field, final HtmlEncoder htmlEncoder) {
         final String[] options = field.getOptionsText();
         final String[] ids = field.getOptionValues();
         final int length = options.length;
@@ -187,7 +188,7 @@ public class HtmlFormBuilder {
             if (field.getType() == InputField.TEXT && options[i].equals("__other")) {
                 offerOther = true;
             } else {
-                str.append("    <option value=\"" + TagProcessor.getEncoder().encoder(ids[i]) + "\"" + selectedSegment + ">" + TagProcessor.getEncoder().encoder(options[i]) + "</option>\n");
+                str.append("    <option value=\"" + htmlEncoder.encodeHtml(ids[i]) + "\"" + selectedSegment + ">" + htmlEncoder.encodeHtml(options[i]) + "</option>\n");
             }
         }
         if (!field.isRequired() || length == 0) {

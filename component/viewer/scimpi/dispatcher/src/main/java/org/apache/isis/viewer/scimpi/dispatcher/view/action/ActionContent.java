@@ -30,7 +30,7 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectActionParameter;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.BlockContent;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 
 public class ActionContent implements BlockContent {
     private final ObjectAction action;
@@ -55,7 +55,7 @@ public class ActionContent implements BlockContent {
         parameters[index] = value;
     }
 
-    public ObjectAdapter[] getParameters(final TagProcessor tagProcessor) {
+    public ObjectAdapter[] getParameters(final TemplateProcessor templateProcessor) {
         final ObjectAdapter[] params = new ObjectAdapter[parameters.length];
         final List<ObjectActionParameter> pars = action.getParameters();
         for (int i = 0; i < parameters.length; i++) {
@@ -65,7 +65,7 @@ public class ActionContent implements BlockContent {
                 Localization localization = IsisContext.getLocalization(); 
                 params[i] = facet.parseTextEntry(null, parameters[i], localization);            
             } else {
-                params[i] = tagProcessor.getContext().getMappedObject(parameters[i]);
+                params[i] = templateProcessor.getContext().getMappedObject(parameters[i]);
             }
         }
         return params;

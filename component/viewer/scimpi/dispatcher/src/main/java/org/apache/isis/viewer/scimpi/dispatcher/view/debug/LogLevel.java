@@ -22,31 +22,32 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.debug;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class LogLevel extends AbstractElementProcessor {
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
 
-        String view = tagProcessor.getOptionalProperty(VIEW, tagProcessor.getViewPath());
-        view = tagProcessor.getContext().fullFilePath(view);
+        String view = templateProcessor.getOptionalProperty(VIEW, templateProcessor.getViewPath());
+        view = templateProcessor.getContext().fullFilePath(view);
         final Level level = LogManager.getRootLogger().getLevel();
-        final boolean showSelector = tagProcessor.isRequested(SHOW_SELECT, true);
+        final boolean showSelector = templateProcessor.isRequested(SHOW_SELECT, true);
         if (showSelector) {
-            tagProcessor.appendHtml("<form action=\"log.app\" type=\"post\" >");
-            tagProcessor.appendHtml("<input type=\"hidden\" name=\"view\" value=\"" + view + "\" />");
-            tagProcessor.appendHtml("<select name=\"level\">");
+            templateProcessor.appendHtml("<form action=\"log.app\" type=\"post\" >");
+            templateProcessor.appendHtml("<input type=\"hidden\" name=\"view\" value=\"" + view + "\" />");
+            templateProcessor.appendHtml("<select name=\"level\">");
             for (final Level l : new Level[] { Level.OFF, Level.FATAL, Level.ERROR, Level.WARN, Level.INFO, Level.DEBUG, Level.TRACE }) {
                 final String settings = level + "\"" + (level == l ? " selected=\"selected\" " : "");
-                tagProcessor.appendHtml("<option " + settings + ">" + l + "</option>");
+                templateProcessor.appendHtml("<option " + settings + ">" + l + "</option>");
             }
-            tagProcessor.appendHtml("<input type=\"submit\" value=\"Change Level\" />");
-            tagProcessor.appendHtml("</select>");
-            tagProcessor.appendHtml("</form>");
+            templateProcessor.appendHtml("<input type=\"submit\" value=\"Change Level\" />");
+            templateProcessor.appendHtml("</select>");
+            templateProcessor.appendHtml("</form>");
         } else {
-            tagProcessor.appendHtml(level.toString());
+            templateProcessor.appendHtml(level.toString());
         }
     }
 

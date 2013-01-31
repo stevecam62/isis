@@ -19,22 +19,23 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.action;
 
-import org.apache.isis.viewer.scimpi.dispatcher.TagOrderException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.BlockContent;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TagOrderException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Parameter extends AbstractElementProcessor {
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        final BlockContent blockContent = tagProcessor.getBlockContent();
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        final BlockContent blockContent = templateProcessor.peekBlock();
         if (!(blockContent instanceof ActionContent)) {
-            throw new TagOrderException(tagProcessor);
+            throw new TagOrderException(templateProcessor);
         }
 
-        final String field = tagProcessor.getOptionalProperty(PARAMETER_NUMBER);
-        final String value = tagProcessor.getRequiredProperty(VALUE);
+        final String field = templateProcessor.getOptionalProperty(PARAMETER_NUMBER);
+        final String value = templateProcessor.getRequiredProperty(VALUE);
         final ActionContent block = (ActionContent) blockContent;
         block.setParameter(field, value);
     }

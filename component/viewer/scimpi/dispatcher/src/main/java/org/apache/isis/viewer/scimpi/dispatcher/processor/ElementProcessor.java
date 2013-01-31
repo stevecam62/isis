@@ -19,11 +19,22 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.processor;
 
+import org.apache.isis.viewer.scimpi.ScimpiContext;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+
 
 public interface ElementProcessor {
 
+    /**
+     * The name of the tag for the element to be processed by this processor.
+     */
     String getName();
 
-    void process(TagProcessor tagProcessor);
+    /**
+     * Called during initialisation of the Scimpi framework to allow each processor to set itself up.
+     */
+    void init(ScimpiContext context);
+
+    void process(TemplateProcessor templateProcessor, RequestState state);
 
 }

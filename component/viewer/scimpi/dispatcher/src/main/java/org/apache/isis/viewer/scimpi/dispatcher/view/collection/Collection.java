@@ -27,22 +27,23 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor.RepeatMarker;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor.RepeatMarker;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Collection extends AbstractElementProcessor {
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        final Request context = tagProcessor.getContext();
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        final Request context = templateProcessor.getContext();
 
         ObjectAdapter collection;
 
-        final String field = tagProcessor.getOptionalProperty(FIELD);
+        final String field = templateProcessor.getOptionalProperty(FIELD);
         if (field != null) {
-            final String id = tagProcessor.getOptionalProperty(OBJECT);
+            final String id = templateProcessor.getOptionalProperty(OBJECT);
             final ObjectAdapter object = context.getMappedObjectOrResult(id);
             final ObjectAssociation objectField = object.getSpecification().getAssociation(field);
             if (!objectField.isOneToManyAssociation()) {
@@ -51,16 +52,16 @@ public class Collection extends AbstractElementProcessor {
             IsisContext.getPersistenceSession().resolveField(object, objectField);
             collection = objectField.get(object);
         } else {
-            final String id = tagProcessor.getOptionalProperty(COLLECTION);
+            final String id = templateProcessor.getOptionalProperty(COLLECTION);
             collection = context.getMappedObjectOrResult(id);
         }
 
-        final RepeatMarker marker = tagProcessor.createMarker();
+        final RepeatMarker marker = templateProcessor.createMarker();
 
-        final String variable = tagProcessor.getOptionalProperty(ELEMENT_NAME);
-        final String scopeName = tagProcessor.getOptionalProperty(SCOPE);
+        final String variable = templateProcessor.getOptionalProperty(ELEMENT_NAME);
+        final String scopeName = templateProcessor.getOptionalProperty(SCOPE);
         final Scope scope = Request.scope(scopeName, Scope.REQUEST);
-        final String rowClassesList = tagProcessor.getOptionalProperty(ROW_CLASSES, ODD_ROW_CLASS + "|" + EVEN_ROW_CLASS);
+        final String rowClassesList = templateProcessor.getOptionalProperty(ROW_CLASSES, ODD_ROW_CLASS + "|" + EVEN_ROW_CLASS);
         String[] rowClasses = new String[0];
         if (rowClassesList != null) {
             rowClasses = rowClassesList.split("[,|/]");
@@ -68,7 +69,7 @@ public class Collection extends AbstractElementProcessor {
 
         final CollectionFacet facet = collection.getSpecification().getFacet(CollectionFacet.class);
         if (facet.size(collection) == 0) {
-            tagProcessor.skipUntilClose();
+            templateProcessor.skipUntilClose();
         } else {
             final Iterator<ObjectAdapter> iterator = facet.iterator(collection);
             int row = 0;
@@ -80,7 +81,7 @@ public class Collection extends AbstractElementProcessor {
                 }
                 context.addVariable(variable, context.mapObject(element, scope), scope);
                 marker.repeat();
-                tagProcessor.processUtilCloseTag();
+                templateProcessor.processUtilCloseTag();
                 row++;
             }
         }

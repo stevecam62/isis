@@ -32,7 +32,8 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.viewer.scimpi.ForbiddenException;
 import org.apache.isis.viewer.scimpi.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class Members extends AbstractElementProcessor {
@@ -50,16 +51,16 @@ public class Members extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        if (tagProcessor.getContext().isDebugDisabled()) {
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        if (templateProcessor.getContext().isDebugDisabled()) {
             return;
         }
 
-        final String id = tagProcessor.getOptionalProperty(OBJECT);
-        final String fieldName = tagProcessor.getOptionalProperty(FIELD);
-        tagProcessor.appendHtml("<pre class=\"debug\">");
+        final String id = templateProcessor.getOptionalProperty(OBJECT);
+        final String fieldName = templateProcessor.getOptionalProperty(FIELD);
+        templateProcessor.appendHtml("<pre class=\"debug\">");
         try {
-            ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
+            ObjectAdapter object = templateProcessor.getContext().getMappedObjectOrResult(id);
             ObjectAssociation field = null;
             if (fieldName != null) {
                 field = object.getSpecification().getAssociation(fieldName);
@@ -68,40 +69,40 @@ public class Members extends AbstractElementProcessor {
                 }
                 object = field.get(object);
             }
-            tagProcessor.processUtilCloseTag();
+            templateProcessor.processUtilCloseTag();
 
             final ObjectSpecification specification = field == null ? object.getSpecification() : field.getSpecification();
 
-            tagProcessor.appendHtml(specification.getSingularName() + " (" + specification.getFullIdentifier() + ") \n");
+            templateProcessor.appendHtml(specification.getSingularName() + " (" + specification.getFullIdentifier() + ") \n");
             final List<ObjectAssociation> fields = specification.getAssociations();
             for (final ObjectAssociation fld : fields) {
                 if (!fld.isAlwaysHidden()) {
-                    tagProcessor.appendHtml("   " + fld.getId() + " - '" + fld.getName() + "' -> " + fld.getSpecification().getSingularName() + (fld.isOneToManyAssociation() ? " (collection of)" : "") + "\n");
+                    templateProcessor.appendHtml("   " + fld.getId() + " - '" + fld.getName() + "' -> " + fld.getSpecification().getSingularName() + (fld.isOneToManyAssociation() ? " (collection of)" : "") + "\n");
                 }
             }
-            tagProcessor.appendHtml("   --------------\n");
+            templateProcessor.appendHtml("   --------------\n");
             final List<ObjectAction> actions = specification.getObjectActions(ActionType.USER, Contributed.INCLUDED);
             ;
             for (final ObjectAction action : actions) {
-                tagProcessor.appendHtml("   " + action.getId() + " (");
+                templateProcessor.appendHtml("   " + action.getId() + " (");
                 boolean first = true;
                 for (final ObjectActionParameter parameter : action.getParameters()) {
                     if (!first) {
-                        tagProcessor.appendHtml(", ");
+                        templateProcessor.appendHtml(", ");
                     }
-                    tagProcessor.appendHtml(parameter.getSpecification().getSingularName());
+                    templateProcessor.appendHtml(parameter.getSpecification().getSingularName());
                     first = false;
                 }
-                tagProcessor.appendHtml(")" + " - '" + action.getName() + "'");
+                templateProcessor.appendHtml(")" + " - '" + action.getName() + "'");
                 if (action.getSpecification() != null) {
-                    tagProcessor.appendHtml(" -> " + action.getSpecification().getSingularName() + ")");
+                    templateProcessor.appendHtml(" -> " + action.getSpecification().getSingularName() + ")");
                 }
-                tagProcessor.appendHtml("\n");
+                templateProcessor.appendHtml("\n");
             }
         } catch (final ScimpiException e) {
-            tagProcessor.appendHtml("Debug failed: " + e.getMessage());
+            templateProcessor.appendHtml("Debug failed: " + e.getMessage());
         }
-        tagProcessor.appendHtml("</pre>");
+        templateProcessor.appendHtml("</pre>");
     }
 
 }

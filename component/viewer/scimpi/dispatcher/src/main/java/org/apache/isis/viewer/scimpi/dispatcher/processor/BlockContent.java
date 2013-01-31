@@ -19,5 +19,10 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.processor;
 
+/**
+ * BlockContent is an interface that proides a way of sharing information bettween elements. A parent element
+ * creates content object of its particular type and the sub element then picks up that object to access or
+ * set the data.
+ */
 public interface BlockContent {
 }

@@ -27,13 +27,13 @@ public class SwfTag implements Snippet {
     public static final int START = 2;
     private final String tagName;
     private final int type;
-    private final Attributes attributes;
+    private final TagAttributes tagAttributes;
     private final String lineNumbers;
     private final String path;
 
-    public SwfTag(final String tagName, final Attributes attributes, final int type, final String lineNumbers, final String path) {
+    public SwfTag(final String tagName, final TagAttributes tagAttributes, final int type, final String lineNumbers, final String path) {
         this.tagName = tagName;
-        this.attributes = attributes;
+        this.tagAttributes = tagAttributes;
         this.type = type;
         this.lineNumbers = lineNumbers;
         this.path = path;
@@ -56,8 +56,8 @@ public class SwfTag implements Snippet {
         return tagName;
     }
 
-    public Attributes getAttributes() {
-        return attributes;
+    public TagAttributes getAttributes() {
+        return tagAttributes;
     }
 
     @Override

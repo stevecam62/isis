@@ -24,8 +24,9 @@ import java.util.List;
 
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
@@ -86,20 +87,20 @@ public class History extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        final String action = tagProcessor.getOptionalProperty("action", "display");
-        final Crumbs crumbs = getCrumbs(tagProcessor);
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        final String action = templateProcessor.getOptionalProperty("action", "display");
+        final Crumbs crumbs = getCrumbs(templateProcessor);
         if (action.equals("display") && crumbs != null) {
-            write(crumbs, tagProcessor);
+            write(crumbs, templateProcessor);
         } else if (action.equals("link")) {
-            final String name = tagProcessor.getRequiredProperty(NAME);
-            final String link = tagProcessor.getRequiredProperty(LINK_VIEW);
+            final String name = templateProcessor.getRequiredProperty(NAME);
+            final String link = templateProcessor.getRequiredProperty(LINK_VIEW);
             crumbs.add(name, link);
         } else if (action.equals("object")) {
-            final String id = tagProcessor.getOptionalProperty(OBJECT);
-            final ObjectAdapter object = MethodsUtils.findObject(tagProcessor.getContext(), id);
+            final String id = templateProcessor.getOptionalProperty(OBJECT);
+            final ObjectAdapter object = MethodsUtils.findObject(templateProcessor.getContext(), id);
             final String name = object.titleString();
-            String link = tagProcessor.getRequiredProperty(LINK_VIEW);
+            String link = templateProcessor.getRequiredProperty(LINK_VIEW);
             link += "?_result=" + id;
             crumbs.add(name, link);
         } else if (action.equals("return")) {
@@ -110,35 +111,35 @@ public class History extends AbstractElementProcessor {
 
     }
 
-    public void write(final Crumbs crumbs, final TagProcessor tagProcessor) {
+    public void write(final Crumbs crumbs, final TemplateProcessor templateProcessor) {
         if (crumbs.isEmpty()) {
             return;
         }
 
-        tagProcessor.appendHtml("<div id=\"history\">");
+        templateProcessor.appendHtml("<div id=\"history\">");
         int i = 0;
         final int length = crumbs.size();
         for (final Crumb crumb : crumbs.iterator()) {
             final String link = crumb.link;
             if (i > 0) {
-                tagProcessor.appendHtml("<span class=\"separator\"> | </span>");
+                templateProcessor.appendHtml("<span class=\"separator\"> | </span>");
             }
             if (i == length - 1 || link == null) {
-                tagProcessor.appendHtml("<span class=\"disabled\">");
-                tagProcessor.appendHtml(crumb.name);
-                tagProcessor.appendHtml("</span>");
+                templateProcessor.appendHtml("<span class=\"disabled\">");
+                templateProcessor.appendHtml(crumb.name);
+                templateProcessor.appendHtml("</span>");
             } else {
-                tagProcessor.appendHtml("<a class=\"linked\" href=\"" + link + "\">");
-                tagProcessor.appendHtml(crumb.name);
-                tagProcessor.appendHtml("</a>");
+                templateProcessor.appendHtml("<a class=\"linked\" href=\"" + link + "\">");
+                templateProcessor.appendHtml(crumb.name);
+                templateProcessor.appendHtml("</a>");
             }
             i++;
         }
-        tagProcessor.appendHtml("</div>");
+        templateProcessor.appendHtml("</div>");
     }
 
-    private Crumbs getCrumbs(final TagProcessor tagProcessor) {
-        final Request context = tagProcessor.getContext();
+    private Crumbs getCrumbs(final TemplateProcessor templateProcessor) {
+        final Request context = templateProcessor.getContext();
         Crumbs crumbs = (Crumbs) context.getVariable(_HISTORY);
         if (crumbs == null) {
             crumbs = new Crumbs();

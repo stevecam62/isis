@@ -42,8 +42,8 @@ import org.apache.isis.core.runtime.system.transaction.MessageBroker;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Action;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.structure.FieldEditState;
-import org.apache.isis.viewer.scimpi.dispatcher.structure.FormState;
+import org.apache.isis.viewer.scimpi.dispatcher.form.FieldEditState;
+import org.apache.isis.viewer.scimpi.dispatcher.form.FormState;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
 
 public class ActionAction implements Action {

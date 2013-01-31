@@ -19,30 +19,32 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view.debug;
 
+import org.apache.isis.viewer.scimpi.Names;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class DebuggerLink extends AbstractElementProcessor {
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        if (tagProcessor.getContext().isDebugDisabled()) {
-            tagProcessor.skipUntilClose();
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        if (templateProcessor.getContext().isDebugDisabled()) {
+            templateProcessor.skipUntilClose();
             return;
         }
 
-        final Request context = tagProcessor.getContext();
-        final Object result = context.getVariable(Request.RESULT);
-        tagProcessor.appendHtml("<div class=\"debug\">");
-        tagProcessor.appendHtml("<a class=\"debug-link\" href=\"/debug/debug.shtml\" target=\"debug\" title=\"debug\" >...</a>");
+        final Request context = templateProcessor.getContext();
+        final Object result = context.getVariable(Names.RESULT);
+        templateProcessor.appendHtml("<div class=\"debug\">");
+        templateProcessor.appendHtml("<a class=\"debug-link\" href=\"/debug/debug.shtml\" target=\"debug\" title=\"debug\" >...</a>");
         if (result != null) {
-            tagProcessor.appendHtml(" <a href=\"/debug/object.shtml?_result=" + result + "\" target=\"debug\"  title=\"debug instance\">...</a>");
+            templateProcessor.appendHtml(" <a href=\"/debug/object.shtml?_result=" + result + "\" target=\"debug\"  title=\"debug instance\">...</a>");
         }
-        tagProcessor.appendHtml(" <span class=\"debug-link\" onclick=\"$('#page-debug').toggle()\" alt=\"show/hide debug details\">...</span>");
-        tagProcessor.appendHtml("</div>");
+        templateProcessor.appendHtml(" <span class=\"debug-link\" onclick=\"$('#page-debug').toggle()\" alt=\"show/hide debug details\">...</span>");
+        templateProcessor.appendHtml("</div>");
 
-        tagProcessor.processUtilCloseTag();
+        templateProcessor.processUtilCloseTag();
     }
 
     @Override

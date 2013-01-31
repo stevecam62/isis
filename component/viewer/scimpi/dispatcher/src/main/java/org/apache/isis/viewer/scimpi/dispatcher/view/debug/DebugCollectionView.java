@@ -23,33 +23,34 @@ import java.util.List;
 
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractObjectProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.view.field.LinkedObject;
+import org.apache.isis.viewer.scimpi.dispatcher.view.determine.LinkedObject;
 import org.apache.isis.viewer.scimpi.dispatcher.view.other.HelpLink;
 
 public class DebugCollectionView extends AbstractObjectProcessor {
 
     @Override
-    public void process(final TagProcessor tagProcessor, final ObjectAdapter object) {
-        final String cls = tagProcessor.getOptionalProperty(CLASS, "form");
+    public void process(final TemplateProcessor templateProcessor, final ObjectAdapter object) {
+        final String cls = templateProcessor.getOptionalProperty(CLASS, "form");
         final String classString = " class=\"" + cls + "\"";
-        String title = tagProcessor.getOptionalProperty(FORM_TITLE);
-        final String oddRowClass = tagProcessor.getOptionalProperty(ODD_ROW_CLASS);
-        final String evenRowClass = tagProcessor.getOptionalProperty(EVEN_ROW_CLASS);
-        final boolean showIcons = tagProcessor.isRequested(SHOW_ICON, true);
+        String title = templateProcessor.getOptionalProperty(FORM_TITLE);
+        final String oddRowClass = templateProcessor.getOptionalProperty(ODD_ROW_CLASS);
+        final String evenRowClass = templateProcessor.getOptionalProperty(EVEN_ROW_CLASS);
+        final boolean showIcons = templateProcessor.isRequested(SHOW_ICON, true);
 
+        write(templateProcessor, object, null, null, classString, title, oddRowClass, evenRowClass, showIcons);
     }
 
-    private void write(final TagProcessor tagProcessor, final ObjectAdapter object, final List<ObjectAssociation> fields,
+    private void write(final TemplateProcessor templateProcessor, final ObjectAdapter object, final List<ObjectAssociation> fields,
         final LinkedObject[] linkFields, final String classString, final String title, final String oddRowClass,
         final String evenRowClass, final boolean showIcons) {
-        tagProcessor.appendHtml("<div" + classString + ">");
+        templateProcessor.appendHtml("<div" + classString + ">");
         if (title != null) {
-            tagProcessor.appendHtml("<div class=\"title\">");
-            tagProcessor.appendAsHtmlEncoded(title);
-            tagProcessor.appendHtml("</div>");
-            HelpLink.append(tagProcessor, object.getSpecification().getDescription(), object.getSpecification().getHelp());
+            templateProcessor.appendHtml("<div class=\"title\">");
+            templateProcessor.appendAsHtmlEncoded(title);
+            templateProcessor.appendHtml("</div>");
+            HelpLink.append(templateProcessor, object.getSpecification().getDescription(), object.getSpecification().getHelp());
         }
      /*   
         final List<ObjectAssociation> fields =
@@ -97,7 +98,7 @@ public class DebugCollectionView extends AbstractObjectProcessor {
             request.appendHtml("</div>");
         }
         */
-        tagProcessor.appendHtml("</div>");
+        templateProcessor.appendHtml("</div>");
         
     }
 

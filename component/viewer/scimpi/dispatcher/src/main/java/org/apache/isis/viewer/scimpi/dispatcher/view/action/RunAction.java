@@ -27,8 +27,9 @@ import org.apache.isis.core.metamodel.spec.feature.ObjectAction;
 import org.apache.isis.core.metamodel.spec.feature.ObjectActionParameter;
 import org.apache.isis.viewer.scimpi.ForbiddenException;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
@@ -42,22 +43,22 @@ public class RunAction extends AbstractElementProcessor {
     private final Where where = Where.ANYWHERE;
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        final Request context = tagProcessor.getContext();
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        final Request context = templateProcessor.getContext();
 
-        final String objectId = tagProcessor.getOptionalProperty(OBJECT);
+        final String objectId = templateProcessor.getOptionalProperty(OBJECT);
         final ObjectAdapter object = MethodsUtils.findObject(context, objectId);
 
-        final String methodName = tagProcessor.getRequiredProperty(METHOD);
+        final String methodName = templateProcessor.getRequiredProperty(METHOD);
         final ObjectAction action = MethodsUtils.findAction(object, methodName);
 
-        final String variableName = tagProcessor.getOptionalProperty(RESULT_NAME);
-        final String scopeName = tagProcessor.getOptionalProperty(SCOPE);
+        final String variableName = templateProcessor.getOptionalProperty(RESULT_NAME);
+        final String scopeName = templateProcessor.getOptionalProperty(SCOPE);
 
         final ActionContent parameterBlock = new ActionContent(action);
-        tagProcessor.setBlockContent(parameterBlock);
-        tagProcessor.processUtilCloseTag();
-        final ObjectAdapter[] parameters = parameterBlock.getParameters(tagProcessor);
+        templateProcessor.pushBlock(parameterBlock);
+        templateProcessor.processUtilCloseTag();
+        final ObjectAdapter[] parameters = parameterBlock.getParameters(templateProcessor);
 
         if (!MethodsUtils.isVisibleAndUsable(object, action, where)) {
             throw new ForbiddenException(action, ForbiddenException.VISIBLE_AND_USABLE);
@@ -76,7 +77,7 @@ public class RunAction extends AbstractElementProcessor {
 
         final Scope scope = Request.scope(scopeName, Scope.REQUEST);
         MethodsUtils.runMethod(context, action, object, parameters, variableName, scope);
-        tagProcessor.popBlockContent();
+        templateProcessor.popBlock();
     }
 
     @Override

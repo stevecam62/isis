@@ -19,29 +19,28 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.view;
 
-import org.apache.isis.core.commons.config.ConfigurationConstants;
-import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.viewer.scimpi.Names;
+import org.apache.isis.viewer.scimpi.ScimpiContext;
 import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.ElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 
 public abstract class AbstractElementProcessor implements ElementProcessor, Names {
 
-    private static final String SHOW_ICONS_BY_DEFAULT = ConfigurationConstants.ROOT + "scimpi.show-icons";
+    private static final String SHOW_ICONS_BY_DEFAULT = "show-icons";
 
-    private final boolean showIconByDefault;
+    private boolean showIconByDefault;
 
-    public AbstractElementProcessor() {
-        showIconByDefault = IsisContext.getConfiguration().getBoolean(SHOW_ICONS_BY_DEFAULT, false);
+    public void init(ScimpiContext context) {
+        showIconByDefault = context.getConfiguration().getBoolean(SHOW_ICONS_BY_DEFAULT, false);
     }
-
+    
     /**
      * Return the Class for the class specified in the type attribute.
      */
-    protected Class<?> forClass(final TagProcessor tagProcessor) {
+    protected Class<?> forClass(final TemplateProcessor templateProcessor) {
         Class<?> cls = null;
-        final String className = tagProcessor.getOptionalProperty(TYPE);
+        final String className = templateProcessor.getOptionalProperty(TYPE);
         if (className != null) {
             try {
                 cls = Class.forName(className);

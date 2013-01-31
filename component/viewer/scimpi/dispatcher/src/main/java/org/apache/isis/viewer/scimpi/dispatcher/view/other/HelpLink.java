@@ -20,7 +20,8 @@ package org.apache.isis.viewer.scimpi.dispatcher.view.other;
 
 import org.apache.isis.core.commons.config.ConfigurationConstants;
 import org.apache.isis.core.runtime.system.context.IsisContext;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class HelpLink extends AbstractElementProcessor {
@@ -28,8 +29,8 @@ public class HelpLink extends AbstractElementProcessor {
     private static String site;
     private static String suffix;
 
-    public static void append(final TagProcessor tagProcessor, final String description, final String helpReference) {
-        tagProcessor.appendHtml(createHelpSegment(description, helpReference));
+    public static void append(final TemplateProcessor templateProcessor, final String description, final String helpReference) {
+        templateProcessor.appendHtml(createHelpSegment(description, helpReference));
     }
 
     public static String createHelpSegment(final String description, final String helpReference) {
@@ -63,10 +64,10 @@ public class HelpLink extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
         final String description = null;
-        final String helpReference = tagProcessor.getRequiredProperty("ref");
-        append(tagProcessor, description, helpReference);
+        final String helpReference = templateProcessor.getRequiredProperty("ref");
+        append(templateProcessor, description, helpReference);
     }
 
 }

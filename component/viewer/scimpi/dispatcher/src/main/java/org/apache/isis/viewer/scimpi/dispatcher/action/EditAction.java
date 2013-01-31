@@ -44,8 +44,8 @@ import org.apache.isis.viewer.scimpi.NotLoggedInException;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Action;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
-import org.apache.isis.viewer.scimpi.dispatcher.structure.FieldEditState;
-import org.apache.isis.viewer.scimpi.dispatcher.structure.FormState;
+import org.apache.isis.viewer.scimpi.dispatcher.form.FieldEditState;
+import org.apache.isis.viewer.scimpi.dispatcher.form.FormState;
 
 public class EditAction implements Action {
     public static final String ACTION = "edit";

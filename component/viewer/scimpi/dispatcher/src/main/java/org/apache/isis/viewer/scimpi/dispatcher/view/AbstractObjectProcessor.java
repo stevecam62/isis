@@ -23,16 +23,17 @@ import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.feature.ObjectAssociation;
 import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.viewer.scimpi.ScimpiException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 
 public abstract class AbstractObjectProcessor extends AbstractElementProcessor {
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
-        final String id = tagProcessor.getOptionalProperty(OBJECT);
-        ObjectAdapter object = tagProcessor.getContext().getMappedObjectOrResult(id);
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
+        final String id = templateProcessor.getOptionalProperty(OBJECT);
+        ObjectAdapter object = templateProcessor.getContext().getMappedObjectOrResult(id);
 
-        final String field = tagProcessor.getOptionalProperty(FIELD);
+        final String field = templateProcessor.getOptionalProperty(FIELD);
         if (field != null) {
             final ObjectAssociation objectField = object.getSpecification().getAssociation(field);
             final String error = checkFieldType(objectField);
@@ -43,13 +44,13 @@ public abstract class AbstractObjectProcessor extends AbstractElementProcessor {
             object = objectField.get(object);
         }
 
-        process(tagProcessor, object);
+        process(templateProcessor, object);
     }
 
     protected String checkFieldType(final ObjectAssociation objectField) {
         return null;
     }
 
-    protected abstract void process(TagProcessor tagProcessor, ObjectAdapter object);
+    protected abstract void process(TemplateProcessor templateProcessor, ObjectAdapter object);
 
 }

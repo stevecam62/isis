@@ -25,8 +25,8 @@ import org.apache.isis.core.commons.debug.DebugBuilder;
 import org.apache.isis.viewer.scimpi.ForbiddenException;
 import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Action;
+import org.apache.isis.viewer.scimpi.dispatcher.context.DebugUsers;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
-import org.apache.isis.viewer.scimpi.security.DebugUsers;
 
 public class DebugUserAction implements Action {
 

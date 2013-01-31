@@ -39,10 +39,10 @@ import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.spec.ObjectSpecification;
 import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.DispatchException;
-import org.apache.isis.viewer.scimpi.dispatcher.ScimpiNotFoundException;
+import org.apache.isis.viewer.scimpi.dispatcher.context.DebugUsers;
 import org.apache.isis.viewer.scimpi.dispatcher.context.ErrorCollator;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
-import org.apache.isis.viewer.scimpi.security.DebugUsers;
+import org.apache.isis.viewer.scimpi.dispatcher.context.ScimpiNotFoundException;
 
 public class ServletRequestContext extends Request {
     private HttpServletRequest request;

@@ -51,9 +51,8 @@ import org.apache.isis.core.runtime.system.context.IsisContext;
 import org.apache.isis.core.runtime.system.persistence.Persistor;
 import org.apache.isis.viewer.scimpi.Names;
 import org.apache.isis.viewer.scimpi.ScimpiException;
-import org.apache.isis.viewer.scimpi.security.DebugUsers;
 
-public abstract class Request {
+public abstract class Request implements RequestState {
     private static final Logger LOG = Logger.getLogger(Request.class);
     static final String TRANSIENT_OBJECT_OID_MARKER = "~";
 
@@ -385,7 +384,7 @@ public abstract class Request {
     }
 
     public void clearVariable(String name, final Scope scope) {
-        name = name != null ? name : RESULT;
+        name = name != null ? name : Names.RESULT;
         variables.get(scope).remove(name);
     }
 
@@ -394,7 +393,7 @@ public abstract class Request {
     }
 
     public void addVariable(String name, final Object value, final Scope scope) {
-        name = name != null ? name : RESULT;
+        name = name != null ? name : Names.RESULT;
         if (scope == Scope.SESSION && value != null && !(value instanceof Serializable)) {
             throw new ScimpiException("SESSION scoped variable (" + name + ") must be serializable: " + value);
         }

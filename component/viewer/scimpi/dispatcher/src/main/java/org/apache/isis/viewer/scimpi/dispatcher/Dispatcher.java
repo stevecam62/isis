@@ -54,6 +54,7 @@ import org.apache.isis.viewer.scimpi.DebugHtmlWriter;
 import org.apache.isis.viewer.scimpi.ForbiddenException;
 import org.apache.isis.viewer.scimpi.Names;
 import org.apache.isis.viewer.scimpi.NotLoggedInException;
+import org.apache.isis.viewer.scimpi.ScimpiContext;
 import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.action.ActionAction;
 import org.apache.isis.viewer.scimpi.dispatcher.action.DebugAction;
@@ -64,21 +65,21 @@ import org.apache.isis.viewer.scimpi.dispatcher.action.LogonAction;
 import org.apache.isis.viewer.scimpi.dispatcher.action.LogoutAction;
 import org.apache.isis.viewer.scimpi.dispatcher.action.RemoveAction;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Action;
+import org.apache.isis.viewer.scimpi.dispatcher.context.DebugUsers;
 import org.apache.isis.viewer.scimpi.dispatcher.context.ErrorCollator;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
+import org.apache.isis.viewer.scimpi.dispatcher.context.Response;
+import org.apache.isis.viewer.scimpi.dispatcher.context.ScimpiNotFoundException;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Debug;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.ElementProcessor;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.Encoder;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.HtmlFileParser;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.ProcessorLookup;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.SimpleEncoder;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.ElementProcessorLookup;
 import org.apache.isis.viewer.scimpi.dispatcher.processor.Snippet;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessingException;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessingException;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.util.MethodsUtils;
-import org.apache.isis.viewer.scimpi.security.DebugUsers;
-import org.apache.isis.viewer.scimpi.security.UserManager;
+import org.apache.isis.viewer.scimpi.dispatcher.util.UserManager;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -102,11 +103,16 @@ public class Dispatcher implements Debuggable {
     public static final String COMMAND_ROOT = ".app";
     private final Map<String, Action> actions = new HashMap<String, Action>();
     private final Map<String, String> parameters = new HashMap<String, String>();
-    private final ProcessorLookup processors = new ProcessorLookup();
-    private final HtmlFileParser parser = new HtmlFileParser(processors);
-    private final Encoder encoder = new SimpleEncoder();
+    private final ElementProcessorLookup processors;
+    private final HtmlFileParser parser;
     private boolean showUnshownMessages;
 
+    public Dispatcher() {
+        ScimpiContext context = new RuntimeScimpiContext();
+        processors = new ElementProcessorLookup(context);
+        parser = new HtmlFileParser(processors);
+    }
+    
     public void process(final Request request, final Response response, final String servletPath) {
         LOG.debug("processing request " + servletPath);
         final AuthenticationSession session = UserManager.startRequest(request.getSession());
@@ -114,8 +120,8 @@ public class Dispatcher implements Debuggable {
         
         String language = (String) request.getVariable("user-language");
         if (language != null) {
-            Locale locale = Util.locale(language);
-            TimeZone timeZone = Util.timeZone((String) request.getVariable("user-time-zone"));
+            Locale locale = LocaleUtil.locale(language);
+            TimeZone timeZone = LocaleUtil.timeZone((String) request.getVariable("user-time-zone"));
             IsisContext.getUserProfile().setLocalization(new UserLocalization(locale, timeZone));
          } 
         
@@ -147,7 +153,7 @@ public class Dispatcher implements Debuggable {
                 transactionManager.startTransaction();
             }
 
-            final Throwable ex = e instanceof TagProcessingException ? e.getCause() : e;
+            final Throwable ex = e instanceof TemplateProcessingException ? e.getCause() : e;
             if (ex instanceof ForbiddenException) {
                 LOG.error("invalid access to " + servletPath, e);
                 show403ErrorPage(request, error, e, ex);
@@ -288,10 +294,10 @@ public class Dispatcher implements Debuggable {
 
         context.addVariable("title", "Untitled Page", Scope.REQUEST);
         final Stack<Snippet> tags = loadPageTemplate(context, fullPath);
-        final TagProcessor tagProcessor = new TagProcessor(file, context, encoder, tags, processors);
-        tagProcessor.appendDebug("processing " + fullPath);
+        final TemplateProcessor templateProcessor = new TemplateProcessor(file, context, context, tags, processors);
+        templateProcessor.appendDebug("processing " + fullPath);
         try {
-            tagProcessor.processNextTag();
+            templateProcessor.processNextTag();
             noteIfMessagesHaveNotBeenDisplay(context);
             IsisContext.getUpdateNotifier().clear();
         } catch (final RuntimeException e) {
@@ -300,7 +306,7 @@ public class Dispatcher implements Debuggable {
             IsisContext.getUpdateNotifier().clear();
             throw e;
         }
-        final String page = tagProcessor.popBuffer();
+        final String page = templateProcessor.popBuffer();
         final PrintWriter writer = context.getWriter();
         writer.write(page);
         if (context.getDebug() == Debug.PAGE) {
@@ -432,7 +438,7 @@ public class Dispatcher implements Debuggable {
             }
         }
 
-        AddElementProcessors.init(processors);
+        PreinstallElementProcessors.init(processors);
         processors.addElementProcessor(new org.apache.isis.viewer.scimpi.dispatcher.view.debug.Debug(this));
         
         showUnshownMessages = IsisContext.getConfiguration().getBoolean(SHOW_UNSHOWN_MESSAGES, true);

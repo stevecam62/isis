@@ -19,6 +19,10 @@
 
 package org.apache.isis.viewer.scimpi.dispatcher.processor;
 
+/**
+ * A Snippet is a part of the template and will either be segment of HTML, which can be output directly (after variable 
+ * substitution, or a SWF (a Scimpi) element  that will typically be replaced by generated HTML code.
+ */
 public interface Snippet {
 
     String getHtml();

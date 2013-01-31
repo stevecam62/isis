@@ -24,7 +24,8 @@ import java.io.InputStreamReader;
 
 import org.apache.isis.viewer.scimpi.ScimpiException;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
-import org.apache.isis.viewer.scimpi.dispatcher.processor.TagProcessor;
+import org.apache.isis.viewer.scimpi.dispatcher.context.RequestState;
+import org.apache.isis.viewer.scimpi.dispatcher.processor.TemplateProcessor;
 import org.apache.isis.viewer.scimpi.dispatcher.view.AbstractElementProcessor;
 
 public class VersionNumber extends AbstractElementProcessor {
@@ -39,12 +40,12 @@ public class VersionNumber extends AbstractElementProcessor {
     }
 
     @Override
-    public void process(final TagProcessor tagProcessor) {
+    public void process(final TemplateProcessor templateProcessor, RequestState state) {
         if (version == null) {
             version = "0000"; // default revision number
-            loadRevisonNumber(tagProcessor.getContext());
+            loadRevisonNumber(templateProcessor.getContext());
         }
-        tagProcessor.appendHtml(version);
+        templateProcessor.appendHtml(version);
     }
 
     private void loadRevisonNumber(final Request context) {

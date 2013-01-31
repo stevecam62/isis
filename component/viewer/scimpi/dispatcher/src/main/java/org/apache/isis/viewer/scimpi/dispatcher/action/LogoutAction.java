@@ -23,11 +23,11 @@ import java.io.IOException;
 
 import org.apache.isis.core.commons.authentication.AuthenticationSession;
 import org.apache.isis.core.commons.debug.DebugBuilder;
-import org.apache.isis.core.runtime.system.context.IsisContext;
+import org.apache.isis.core.runtime.system.context.IsisContext;//
 import org.apache.isis.viewer.scimpi.dispatcher.context.Action;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request;
 import org.apache.isis.viewer.scimpi.dispatcher.context.Request.Scope;
-import org.apache.isis.viewer.scimpi.security.UserManager;
+import org.apache.isis.viewer.scimpi.dispatcher.util.UserManager;
 
 public class LogoutAction implements Action {
 
