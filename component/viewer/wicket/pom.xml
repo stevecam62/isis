@@ -47,8 +47,8 @@
         <wicket-bootstrap.version>0.9.7</wicket-bootstrap.version>
         <wicket-source.version>6.0.0.8</wicket-source.version>
 
-        <wicket-select2.version>2.2.3</wicket-select2.version>
-        <select2.version>3.5.1</select2.version>
+        <wicket-select2.version>6.18.0</wicket-select2.version>
+        <select2.version>3.5.2</select2.version>
     </properties>
 
     <!-- used in Site generation for relative references. -->
@@ -269,8 +269,8 @@
 
             <!-- Wicket-Select2 -->
             <dependency>
-                <groupId>com.vaynberg.wicket.select2</groupId>
-                <artifactId>wicket-select2</artifactId>
+                <groupId>org.wicketstuff</groupId>
+                <artifactId>wicketstuff-select2</artifactId>
                 <version>${wicket-select2.version}</version>
                 <exclusions>
                     <exclusion>

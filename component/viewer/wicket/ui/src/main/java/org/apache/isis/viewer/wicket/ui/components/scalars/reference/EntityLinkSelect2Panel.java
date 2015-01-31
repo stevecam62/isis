@@ -19,7 +19,6 @@
 
 package org.apache.isis.viewer.wicket.ui.components.scalars.reference;
 
-import com.vaynberg.wicket.select2.Select2Choice;
 
 import org.apache.wicket.markup.html.form.FormComponentPanel;
 
@@ -42,7 +41,7 @@ class EntityLinkSelect2Panel extends FormComponentPanelAbstract<ObjectAdapter> i
 
     /**
      * Necessary because {@link FormComponentPanel} overrides this as <tt>true</tt>, whereas we want to
-     * report on the state of the underlying {@link Select2Choice}.
+     * report on the state of the underlying {@link org.wicketstuff.select2.Select2Choice}.
      */
     @Override
     public boolean checkRequired() {

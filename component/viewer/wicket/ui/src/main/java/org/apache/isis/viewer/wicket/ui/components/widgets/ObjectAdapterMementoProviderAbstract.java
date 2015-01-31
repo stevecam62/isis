@@ -22,9 +22,10 @@ import java.util.Locale;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
-import com.vaynberg.wicket.select2.TextChoiceProvider;
 import org.apache.wicket.Session;
 import org.apache.wicket.util.convert.IConverter;
+import org.wicketstuff.select2.Response;
+import org.wicketstuff.select2.TextChoiceProvider;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.adapter.mgr.AdapterManager.ConcurrencyChecking;
 import org.apache.isis.core.metamodel.adapter.oid.RootOid;
@@ -76,7 +77,7 @@ public abstract class ObjectAdapterMementoProviderAbstract extends TextChoicePro
     }
 
     @Override
-    public void query(final String term, final int page, final com.vaynberg.wicket.select2.Response<ObjectAdapterMemento> response) {
+    public void query(final String term, final int page, final Response<ObjectAdapterMemento> response) {
         
         final List<ObjectAdapterMemento> mementos = Lists.newArrayList(obtainMementos(term));
         // if not mandatory, and the list doesn't contain null already, then add it in.
