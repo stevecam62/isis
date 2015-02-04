@@ -79,6 +79,8 @@ import org.apache.isis.core.metamodel.facets.actions.action.publishing.Published
 import org.apache.isis.core.metamodel.facets.actions.semantics.ActionSemanticsFacet;
 import org.apache.isis.core.metamodel.facets.actions.action.semantics.ActionSemanticsFacetForActionSemanticsAnnotation;
 import org.apache.isis.core.metamodel.facets.all.hide.HiddenFacet;
+import org.apache.isis.core.metamodel.facets.collections.layout.CollectionLayoutFacetFactory;
+import org.apache.isis.core.metamodel.facets.properties.propertylayout.PropertyLayoutFacetFactory;
 import org.apache.isis.core.metamodel.runtimecontext.RuntimeContext;
 import org.apache.isis.core.metamodel.runtimecontext.RuntimeContextAware;
 import org.apache.isis.core.metamodel.runtimecontext.ServicesInjector;
@@ -115,6 +117,9 @@ public class ActionAnnotationFacetFactory extends FacetFactoryAbstract implement
         processPublishing(processMethodContext);
 
         processTypeOf(processMethodContext);
+
+        processPropertyLayout(processMethodContext);
+        processCollectionLayout(processMethodContext);
     }
 
     void processInvocation(final ProcessMethodContext processMethodContext) {
@@ -214,6 +219,16 @@ public class ActionAnnotationFacetFactory extends FacetFactoryAbstract implement
         final FacetHolder holder = processMethodContext.getFacetHolder();
 
         FacetUtil.addFacet(PrototypeFacetForActionAnnotation.create(action, holder));
+    }
+
+    void processCollectionLayout(final ProcessMethodContext processMethodContext) {
+        CollectionLayoutFacetFactory collectionLayoutFacetFactory = new CollectionLayoutFacetFactory();
+        collectionLayoutFacetFactory.process(processMethodContext);
+    }
+
+    void processPropertyLayout(final ProcessMethodContext processMethodContext) {
+        PropertyLayoutFacetFactory propertyLayoutFacetFactory = new PropertyLayoutFacetFactory();
+        propertyLayoutFacetFactory.process(processMethodContext);
     }
 
     void processSemantics(final ProcessMethodContext processMethodContext) {
