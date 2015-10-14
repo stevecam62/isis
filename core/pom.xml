@@ -126,12 +126,12 @@
         <wicketstuff.version>6.20.0</wicketstuff.version>
 
         <wicket-webjars.version>0.4.7</wicket-webjars.version>
-        <wicket-bootstrap.version>0.9.12</wicket-bootstrap.version>
+        <wicket-bootstrap.version>0.9.13</wicket-bootstrap.version>
         <wicket-source.version>6.0.0.8</wicket-source.version>
 
         <wicket-select2.version>2.2.3</wicket-select2.version>
         <select2.version>3.5.1</select2.version>
-        <jquery-ui.version>1.10.4</jquery-ui.version>
+        <jquery-ui.version>1.11.4</jquery-ui.version>
 
         <guice.version>3.0</guice.version>
         <picocontainer.version>2.14.3</picocontainer.version>
