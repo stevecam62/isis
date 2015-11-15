@@ -14,7 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.apache.isis.core.runtime.services.jaxb.util;
+package org.apache.isis.schema.services.jaxb;
 
 import java.io.StringWriter;
 
@@ -27,7 +27,7 @@ import javax.xml.transform.stream.StreamResult;
  *     The point is that the writer is only ever queried lazily AFTER the result has been generated.
  * </p>
  */
-public class StreamResultWithWriter extends StreamResult {
+class StreamResultWithWriter extends StreamResult {
     private final StringWriter writer;
 
     public StreamResultWithWriter() {

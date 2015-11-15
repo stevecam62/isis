@@ -14,7 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.apache.isis.core.runtime.services.jaxb.util;
+package org.apache.isis.schema.services.jaxb;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -32,7 +32,7 @@ import com.google.common.collect.Maps;
  * An implementation of {@link SchemaOutputResolver} that keeps track of all the schemas for which it has
  * {@link #createOutput(String, String) created} an output {@link StreamResult} containing the content of the schema.
  */
-public class CatalogingSchemaOutputResolver extends SchemaOutputResolver
+class CatalogingSchemaOutputResolver extends SchemaOutputResolver
 {
     private final boolean includeIsisSchema;
     private List<String> namespaceUris = Lists.newArrayList();

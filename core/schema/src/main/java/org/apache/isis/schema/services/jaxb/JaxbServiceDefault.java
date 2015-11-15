@@ -14,7 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.apache.isis.core.runtime.services.jaxb;
+package org.apache.isis.schema.services.jaxb;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -40,7 +40,6 @@ import org.apache.isis.applib.NonRecoverableException;
 import org.apache.isis.applib.annotation.DomainService;
 import org.apache.isis.applib.annotation.NatureOfService;
 import org.apache.isis.applib.services.jaxb.JaxbService;
-import org.apache.isis.core.runtime.services.jaxb.util.CatalogingSchemaOutputResolver;
 import org.apache.isis.schema.utils.jaxbadapters.PersistentEntityAdapter;
 
 @DomainService(
