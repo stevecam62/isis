@@ -23,9 +23,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import com.google.common.collect.Lists;
 
 import org.apache.isis.applib.fixturescripts.FixtureScript;
+import org.apache.isis.applib.services.xactn.TransactionService;
 
 import domainapp.dom.simple.SimpleObject;
 import domainapp.fixture.dom.simple.SimpleObjectCreate;
@@ -34,7 +37,8 @@ import domainapp.fixture.dom.simple.SimpleObjectsTearDown;
 public class RecreateSimpleObjects extends FixtureScript {
 
     public final List<String> NAMES = Collections.unmodifiableList(Arrays.asList(
-            "Foo", "Bar", "Baz", "Frodo", "Froyo", "Fizz", "Bip", "Bop", "Bang", "Boo"));
+            "Foo", null, "Baz", "Frodo", "Froyo", "Fizz", "Bip", "Bop", "Bang", "Boo"));
+//            "Foo", "Bar", "Baz", "Frodo", "Froyo", "Fizz", "Bip", "Bop", "Bang", "Boo"));
 
     public RecreateSimpleObjects() {
         withDiscoverability(Discoverability.DISCOVERABLE);
@@ -86,7 +90,12 @@ public class RecreateSimpleObjects extends FixtureScript {
         for (int i = 0; i < number; i++) {
             final SimpleObjectCreate fs = new SimpleObjectCreate().setName(NAMES.get(i));
             ec.executeChild(this, fs.getName(), fs);
+            transactionService.nextTransaction();
             simpleObjects.add(fs.getSimpleObject());
         }
     }
+
+    @Inject
+    TransactionService transactionService;
+
 }

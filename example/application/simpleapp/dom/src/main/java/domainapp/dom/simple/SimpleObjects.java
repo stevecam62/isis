@@ -27,6 +27,8 @@ import org.apache.isis.applib.annotation.DomainService;
 import org.apache.isis.applib.annotation.DomainServiceLayout;
 import org.apache.isis.applib.annotation.MemberOrder;
 import org.apache.isis.applib.annotation.NatureOfService;
+import org.apache.isis.applib.annotation.Optionality;
+import org.apache.isis.applib.annotation.Parameter;
 import org.apache.isis.applib.annotation.ParameterLayout;
 import org.apache.isis.applib.annotation.SemanticsOf;
 import org.apache.isis.applib.query.QueryDefault;
@@ -93,6 +95,7 @@ public class SimpleObjects {
     )
     @MemberOrder(sequence = "3")
     public SimpleObject create(
+            @Parameter(optionality = Optionality.OPTIONAL)
             @ParameterLayout(named="Name")
             final String name) {
         final SimpleObject obj = repositoryService.instantiate(SimpleObject.class);
